@@ -21,9 +21,10 @@ def setUpCheckList():
 
     checkList.append(100)                                   # I don't think we'll have anyone older than 100
 
-    count = cursor.execute("select count(*) from major")    # number of options that the major could be
+    count = cursor.execute("select count(*) from majors")   # number of options that the major could be
     majorCount = count.fetchone()
     checkList.append(majorCount[0])
+    checkList.append(majorCount[0])                         # a second time for the second major
 
     checkList.append(99)                                    # grad year should not be more than double digits
 
@@ -32,6 +33,9 @@ def checkString(s):
     global checkList
     try:
         data = s.split('/')
+        if len(data) != 8:
+            raise Exception
+
         for instance in data:                           # should all be (able to be) ints
             if not instance.isnumeric():
                 raise Exception                         # 'raise Exception' just kicks code to the 'return False'
@@ -43,9 +47,9 @@ def checkString(s):
         intData = list(map(int,data))                   # for testing the value in the string
         code = intData.pop()
 
-        if not checkList:                           # one-time set up of values to test against
+        if not checkList:                               # one-time set up of values to test against
             setUpCheckList()
-        for i in range(len(checkList)):                      # check values against constraints
+        for i in range(len(checkList)):                 # check values against constraints
             if not (0 < intData[i] <= checkList[i]):    # Taking advantage of python if statements
                 raise Exception
 
@@ -81,7 +85,7 @@ def putInDatabase(s):
     eventID = event.fetchone()[0]
 
     values += ', ' + str(eventID)
-    sql = "INSERT INTO attendance (stuID, sex, race, age, major, gradYear, event)" \
+    sql = "INSERT INTO attendance (stuID, sex, race, age, major, major2, gradYear, event)" \
           " VALUES (" + values + ");"
 
     cursor.execute(sql)
@@ -107,4 +111,4 @@ def err404(err):
     return render_template('404.html', err=err)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0")
