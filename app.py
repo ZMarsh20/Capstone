@@ -104,11 +104,11 @@ def home():
 
 @app.route('/test', methods=['GET', 'POST'])
 def test():
-    return render_template("index.html")
+    return render_template("test.html")
 
 @app.errorhandler(404)
 def err404(err):
-    return render_template('404.html', err=err)
+    return render_template('error.html', err=err)
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
