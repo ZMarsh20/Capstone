@@ -1,8 +1,6 @@
 import pyqrcode
 
-s = "555555/male/white/21/cs/2022"
-
+s = "222222/01/01/23/08/08/22/00001"
 url = pyqrcode.create(s)
 
-url.svg("zach.svg", scale=8)
-url.png('zach.png', scale=6)
+url.png('victor.png', scale=6)
