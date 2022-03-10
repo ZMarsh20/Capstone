@@ -18,17 +18,17 @@ def setUpCheckList():
     global checkList
     cursor = mysql.connection.cursor()
 
-    cursor.execute("select count(*) from sex")      # number of options that the sex could be
+    cursor.execute("select count(*) from sex")              # number of options that the sex could be
     count = cursor.fetchone()[0]
     checkList.append(count)
 
-    cursor.execute("select count(*) from race")     # number of options that the race could be
+    cursor.execute("select count(*) from race")             # number of options that the race could be
     count = cursor.fetchone()[0]
     checkList.append(count)
 
     checkList.append(100)                                   # I don't think we'll have anyone older than 100
 
-    cursor.execute("select count(*) from majors")   # number of options that the major could be
+    cursor.execute("select count(*) from majors")           # number of options that the major could be
     count = cursor.fetchone()[0]
     checkList.append(count)
     checkList.append(count)                                 # a second time for the second major
