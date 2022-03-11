@@ -1,13 +1,13 @@
 import datetime
+import os
 import flask_mysqldb
-
 from flask import Flask, render_template, request
 
 app = Flask(__name__, static_url_path='/static/')
 
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_PASSWORD'] = os.environ.get("PASSWORD")
 app.config['MYSQL_DB'] = 'cs_495'
 
 mysql = flask_mysqldb.MySQL(app)
