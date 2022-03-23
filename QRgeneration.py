@@ -1,6 +1,6 @@
 import pyqrcode
 
-s = "555555/01/01/21/08/08/22/"
+s = "555555/1/1/21/8/8/22/#"
 
 url = pyqrcode.create(s)
 
