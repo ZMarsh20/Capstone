@@ -1,14 +1,17 @@
 import datetime
-import os
 import flask_mysqldb
+import os
 from flask import Flask, render_template, request
+#from dotenv import load_dotenv
+#project_folder = os.path.expanduser('~/mysite')
+#load_dotenv(os.path.join(project_folder, '.env'))
 
 app = Flask(__name__, static_url_path='/static/')
 
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = os.environ.get("PASSWORD")
-app.config['MYSQL_DB'] = 'cs_495'
+app.config['MYSQL_HOST'] = 'localhost'#'victorf8.mysql.pythonanywhere-services.com'
+app.config['MYSQL_USER'] = 'root'#'victorf8'
+app.config['MYSQL_PASSWORD'] = ''#os.getenv("PASSWORD")
+app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
 mysql = flask_mysqldb.MySQL(app)
 
@@ -43,50 +46,49 @@ def checkString(s):
         if len(data) != 8:
             raise Exception
 
-        for instance in data:                           # should all be (able to be) ints
+        for instance in data:                               # should all be (able to be) ints
             if not instance.isnumeric():
-                raise Exception                         # 'raise Exception' just kicks code to the 'return False'
+                raise Exception                             # 'raise Exception' just kicks code to the 'return False'
 
-        stuID = data.pop(0)                             # check format of studentID
+        stuID = data.pop(0)                                 # check format of studentID
         if len(stuID) != 6 or int(stuID) < 0:
             raise Exception
 
-        intData = list(map(int,data))                   # for testing the value in the string
+        intData = list(map(int,data))                       # for testing the value in the string
         code = intData.pop()
 
-        if not checkList:                               # one-time set up of values to test against
+        if not checkList:                                   # one-time set up of values to test against
             setUpCheckList()
-        for i in range(len(checkList)):                 # check values against constraints
-            if not (0 < intData[i] <= checkList[i]):    # Taking advantage of python if statements
+        for i in range(len(checkList)):                     # check values against constraints
+            if not (0 < intData[i] <= checkList[i]):        # Taking advantage of python if statements
                 raise Exception
 
-        cursor = mysql.connection.cursor()              # testing 'code' for getting an event
-                                                        # (see if 'code' is for real event)
+        cursor = mysql.connection.cursor()                  # testing 'code' for getting an event
+        # (see if 'code' is for real event)
 
         cursor.execute("select id from events where code = " + str(code) + ' and "'
-                               + str(datetime.datetime.now().replace(microsecond=0))
-                               + '" between startTime and endTime')
+                       + str(datetime.datetime.now().replace(microsecond=0))
+                       + '" between startTime and endTime')
         if not cursor.fetchone():
             raise Exception
 
         return True
-    except Exception as e:
-        print(e)
+    except Exception:
         return False
 
 def putInDatabase(s):
     cursor = mysql.connection.cursor()
 
-    data = s.split('/')                         # formatting the sql query
+    data = s.split('/')                                     # formatting the sql query
     code = data.pop()
     values = ""
     values += '"' + data[0] + '"'
     for i in range(1,len(data)):
         values += ', ' + data[i]
-                                                # put event foreign key id in place of the code in the string
+        # put event foreign key id in place of the code in the string
     cursor.execute("select id from events where code = " + str(code) + ' and "'
-                       + str(datetime.datetime.now().replace(microsecond=0))
-                       + '" between startTime and endTime')
+                   + str(datetime.datetime.now().replace(microsecond=0))
+                   + '" between startTime and endTime')
     eventID = cursor.fetchone()[0]
 
     values += ', ' + str(eventID)
