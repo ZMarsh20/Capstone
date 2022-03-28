@@ -4,22 +4,22 @@
 {% block content %}
     <form action="/sign_in" method="post">
         <label id="user" for="username">Username: </label>
-        <input id="username" type="text" name="username" required oninput="normal()">
+        <input id="username" type="text" name="username" required oninput="normal()" minlength="8" maxlength="40">
         <label id="pass" for="username">Password: </label>
-        <input id="password" type="password" name="password" required oninput="normal()">
+        <input id="password" type="password" name="password" required oninput="normal()" minlength="8" maxlength="25">
         <input id="submit" type="submit">
     </form>
     <button id="signup" onclick="signup()">Sign Up? (it's free)</button>
 
-    <form id="signupform" action="/sign_in" method="post">
+    <form id="signupform" action="/sign_up" method="post">
         <label id="newuser" for="username">Username: </label>
-        <input id="newusername" type="text" name="newusername" required oninput="normal()">
+        <input id="newusername" type="text" name="newusername" required oninput="normal()" minlength="8" maxlength="40">
         <label id="newpass" for="username">Password: </label>
-        <input id="newpassword" type="password" name="newpassword" required  oninput="normal()">
+        <input id="newpassword" type="password" name="newpassword" required oninput="normal()" minlength="8" maxlength="25">
         <label id="newpass2" for="username">Confirm Password: </label>
-        <input id="newpassword2" type="password" required oninput="normal()">
+        <input id="newpassword2" type="password" required oninput="normal()" minlength="8" maxlength="25">
         <label id="lname" for="username">Put down the name you would like us to use for you: </label>
-        <input id="name" name="name" type="text" required oninput="normal()">
+        <input id="name" name="name" type="text" required oninput="normal()" maxlength="40">
         <input id="ok" type="text" required style="display: none;">
     </form>
     <button id="submit2" onclick="check()">Submit new user</button>
