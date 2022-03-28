@@ -1,5 +1,6 @@
 import datetime
 import flask_mysqldb
+from passlib.hash import sha256_crypt
 import os
 from flask import Flask, render_template, request, url_for, redirect, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -15,72 +16,90 @@ app.config['MYSQL_USER'] = 'root'#'victorf8'
 app.config['MYSQL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/cs_495'
+app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
+
 mysql = flask_mysqldb.MySQL(app)
 db = SQLAlchemy(app)
 
-app.config['SECRET_KEY'] = "hgbh9dfgh"#os.getenv("SECRET_KEY")
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login = False
 
-class User(UserMixin, db.Model):
+class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
-    password = db.Column(db.String(40), nullable=False)
+    password = db.Column(db.String(80), nullable=False)
     name = db.Column(db.String(40), nullable=False)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if login:
+        eventsList = []
         return render_template("events.html",login="Logout")
     return render_template("home.html", login="Sign In")
 
 @login_manager.user_loader
 def load_user(user_id):
-    user = User.query.get(user_id)
+    user = Users.query.get(user_id)
     return user
 
 @app.route('/logout')
 @login_required
 def logout():
+    global login
     logout_user()
+    login = False
     return redirect(url_for('home'))
 
-
-@app.route('/sign_in', methods=['GET','POST'])
-def sign_in():
+@app.route('/sign_up', methods=['GET','POST'])
+def sign_up():
+    global login
     wrong = False
     wasSignUp = False
     if current_user.is_authenticated:
         return render_template('logout.html', login="Sign Out")
     if request.method == 'POST':
-        try:
-            if request.form['newusername'] != None:
-                wasSignUp = True
-                user = User(username=request.form['newusername'], password=request.form['newpassword'], name=request.form['name'])
-                if User.query.filter_by(username=user.username).first() == None:
-                    db.session.add(user)
-                    db.session.commit()
-                    login_user(user)
-                    return redirect(url_for('home'))
-                else:
-                    wrong = True
-        except:
-            user = User.query.filter_by(username=request.form['username']).first()
-            if user != None and user.password == request.form['password']:
-                login_user(user)
-                return redirect(url_for('home'))
-            else:
-                wrong = True
+        wasSignUp = True
+        user = Users(username=request.form['newusername'],
+                     password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
+                     name=request.form['name'])
+        if Users.query.filter_by(username=user.username).first() == None:
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            login = True
+            return redirect(url_for('home'))
+        else:
+            wrong = True
+    return render_template('login.html', login="Sign In", wrong=wrong, wasSignUp=wasSignUp)
+
+@app.route('/sign_in', methods=['GET','POST'])
+def sign_in():
+    global login
+    wrong = False
+    wasSignUp = False
+    if current_user.is_authenticated:
+        return render_template('logout.html', login="Sign Out")
+    if request.method == 'POST':
+        user = Users.query.filter_by(username=request.form['username']).first()
+        if user != None and sha256_crypt.verify(request.form['password']+app.config['SECRET_KEY'], user.password):
+            login_user(user)
+            login = True
+            return redirect(url_for('home'))
+        else:
+            wrong = True
     return render_template('login.html', login="Sign In", wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/view/<i>')
 def view(i):
     return "view"
 
-@app.route('/read', methods=['GET','POST'])
-def read():
-    return "read"
+@app.route('/add', methods=['GET','POST'])
+def add():
+    if login:
+        return "add"
+    return redirect(url_for("sign_in"))
 
 checkList = []
 
