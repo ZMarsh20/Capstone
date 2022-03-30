@@ -17,6 +17,7 @@ app.config['MYSQL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/cs_495'
+#'mysql://victorf8:@victorf8.mysql.pythonanywhere-services.com/victorf7$cs_495'
 app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
 
 mysql = flask_mysqldb.MySQL(app)
