@@ -18,65 +18,11 @@ var sign = document.getElementById("signup");
 var log = document.getElementById("login");
 var signupform = document.getElementById("signupform");
 
-user.style.display = "block";
-username.style.display = "block";
-password.style.display = "block";
-pass.style.display = "block";
-submit.style.display = "block";
-
-log.style.display = "none";
-sign.style.display = "block";
-
-newuser.style.display = "none";
-newusername.style.display = "none";
-newpassword.style.display = "none";
-newpass.style.display = "none";
-newpassword2.style.display = "none";
-newpass2.style.display = "none";
-submit2.style.display = "none";
-_name.style.display = "none";
-lname.style.display = "none";
-
-
 function signup() {
-    user.style.display = "none";
-    username.style.display = "none";
-    password.style.display = "none";
-    pass.style.display = "none";
-    submit.style.display = "none";
-        
-    log.style.display = "block";
-    sign.style.display = "none";
-    
-    newuser.style.display = "block";
-    newusername.style.display = "block";
-    newpassword.style.display = "block";
-    newpass.style.display = "block";
-    newpassword2.style.display = "block";
-    newpass2.style.display = "block";
-    submit2.style.display = "block";
-    _name.style.display = "block";
-    lname.style.display = "block";
+    location.assign("\\sign_up");
 }
 function login() {
-    user.style.display = "block";
-    username.style.display = "block";
-    password.style.display = "block";
-    pass.style.display = "block";
-    submit.style.display = "block";
-
-    log.style.display = "none";
-    sign.style.display = "block";
-    
-    newuser.style.display = "none";
-    newusername.style.display = "none";
-    newpassword.style.display = "none";
-    newpass.style.display = "none";
-    newpassword2.style.display = "none";
-    newpass2.style.display = "none";
-    submit2.style.display = "none";
-    _name.style.display = "none";
-    lname.style.display = "none";
+    location.assign("\\sign_in");
 }
 function check() {
     if (newpassword.value === newpassword2.value) {
@@ -85,16 +31,10 @@ function check() {
             newusername.style.backgroundColor = "red";
         } 
         else {
-            if (_name.value != "") {
-                if (newpassword.value == "") {
-                    alert("Please make sure all fields are filled");
-                } else {
-                    signupform.submit();
-                }
-            }
-            else {
+            if (newpassword.value == "") {
                 alert("Please make sure all fields are filled");
-                _name.style.backgroundColor = "red";
+            } else {
+                return true;
             }
         }
     }
@@ -103,12 +43,17 @@ function check() {
         newpassword.style.backgroundColor = "red";
         newpassword2.style.backgroundColor = "red";
     }
+    return false;
 }
 function normal() {
-    newpassword.style.backgroundColor = "white";
-    newpassword2.style.backgroundColor = "white";
-    _name.style.backgroundColor = "white";
-    newusername.style.backgroundColor = "white";
+    try {
+        newpassword.style.backgroundColor = "white";
+        newpassword2.style.backgroundColor = "white";
+        newusername.style.backgroundColor = "white";
+    } catch {
+        username.style.backgroudColor = "white";
+        password.style.backgroudColor = "white";
+    }
 }
 function usernameTaken() {
     alert("Username taken. Try again");

@@ -2,37 +2,33 @@
 {% block title %}Sign In{%endblock%}
 
 {% block content %}
-    <form action="/sign_in" method="post">
-        <label id="user" for="username">Username: </label>
-        <input id="username" type="text" name="username" required oninput="normal()" minlength="8" maxlength="40">
-        <label id="pass" for="username">Password: </label>
-        <input id="password" type="password" name="password" required oninput="normal()" minlength="8" maxlength="25">
-        <input id="submit" type="submit">
-    </form>
-    <button id="signup" onclick="signup()">Sign Up? (it's free)</button>
-
-    <form id="signupform" action="/sign_up" method="post">
-        <label id="newuser" for="username">Username: </label>
-        <input id="newusername" type="text" name="newusername" required oninput="normal()" minlength="8" maxlength="40">
-        <label id="newpass" for="username">Password: </label>
-        <input id="newpassword" type="password" name="newpassword" required oninput="normal()" minlength="8" maxlength="25">
-        <label id="newpass2" for="username">Confirm Password: </label>
-        <input id="newpassword2" type="password" required oninput="normal()" minlength="8" maxlength="25">
-        <label id="lname" for="username">Put down the name you would like us to use for you: </label>
-        <input id="name" name="name" type="text" required oninput="normal()" maxlength="40">
-        <input id="ok" type="text" required style="display: none;">
-    </form>
-    <button id="submit2" onclick="check()">Submit new user</button>
-    <button id="login" onclick="login()">Already a user?</button>
-
-
-    <script src="/static/login.js"></script>
     {% if wasSignUp %}
-        <script>signup()</script>
+        <form id="signupform" action="/sign_up" onsubmit="return check()" method="post">
+            <label id="newuser" for="username">Username: </label><br>
+            <input id="newusername" type="text" name="newusername" required oninput="normal()" minlength="8" maxlength="40"><br>
+            <label id="newpass" for="username">Password: </label><br>
+            <input id="newpassword" type="password" name="newpassword" required oninput="normal()" minlength="8" maxlength="25"><br>
+            <label id="newpass2" for="username">Confirm Password: </label><br>
+            <input id="newpassword2" type="password" required oninput="normal()" minlength="8" maxlength="25"><br>
+            <label id="lname" for="username">Put down the name you would like us to use for you: </label><br>
+            <input id="name" name="name" type="text" oninput="normal()" maxlength="40"><br>
+            <input id="submit2" type="submit"><br>
+        </form>
+        <button id="login" onclick="login()">Already a user?</button>
+        <script src="/static/login.js"></script>
         {% if wrong %}
             <script>usernameTaken()</script>
         {%endif%}
     {%else%}
+        <form action="/sign_in" method="post">
+            <label id="user" for="username">Username: </label><br>
+            <input id="username" type="text" name="username" required oninput="normal()" minlength="8" maxlength="40"><br>
+            <label id="pass" for="username">Password: </label><br>
+            <input id="password" type="password" name="password" required oninput="normal()" minlength="8" maxlength="25"><br>
+            <input id="submit" type="submit"><br>
+        </form>
+        <button id="signup" onclick="signup()">Sign Up? (it's free)</button><br>
+        <script src="/static/login.js"></script>
         {% if wrong %}
             <script>tryAgain()</script>
         {%endif%}

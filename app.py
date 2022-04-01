@@ -17,7 +17,7 @@ app.config['MYSQL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/cs_495'
-#'mysql://victorf8:@victorf8.mysql.pythonanywhere-services.com/victorf7$cs_495'
+#'mysql://victorf8:'+ os.getenv("PASSWORD") +'@victorf8.mysql.pythonanywhere-services.com/victorf8$cs_495'
 app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
 
 mysql = flask_mysqldb.MySQL(app)
@@ -37,8 +37,8 @@ class Users(UserMixin, db.Model):
 def home():
     if login:
         eventsList = []
-        return render_template("events.html",login="Logout")
-    return render_template("home.html", login="Sign In")
+        return render_template("events.html",login=login)
+    return render_template("home.html", login=login)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -57,14 +57,16 @@ def logout():
 def sign_up():
     global login
     wrong = False
-    wasSignUp = False
+    wasSignUp = True
     if current_user.is_authenticated:
-        return render_template('logout.html', login="Sign Out")
+        return render_template('logout.html', login=login)
     if request.method == 'POST':
-        wasSignUp = True
+        name = request.form['name']
+        if len(name) < 1:
+            name = None
         user = Users(username=request.form['newusername'],
                      password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
-                     name=request.form['name'])
+                     name=name)
         if Users.query.filter_by(username=user.username).first() == None:
             db.session.add(user)
             db.session.commit()
@@ -73,7 +75,7 @@ def sign_up():
             return redirect(url_for('home'))
         else:
             wrong = True
-    return render_template('login.html', login="Sign In", wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=login, wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/sign_in', methods=['GET','POST'])
 def sign_in():
@@ -81,7 +83,7 @@ def sign_in():
     wrong = False
     wasSignUp = False
     if current_user.is_authenticated:
-        return render_template('logout.html', login="Sign Out")
+        return render_template('logout.html', login=login)
     if request.method == 'POST':
         user = Users.query.filter_by(username=request.form['username']).first()
         if user != None and sha256_crypt.verify(request.form['password']+app.config['SECRET_KEY'], user.password):
@@ -90,7 +92,7 @@ def sign_in():
             return redirect(url_for('home'))
         else:
             wrong = True
-    return render_template('login.html', login="Sign In", wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=login, wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/view/<i>')
 def view(i):
