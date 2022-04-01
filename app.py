@@ -2,7 +2,7 @@ import datetime
 import flask_mysqldb
 from passlib.hash import sha256_crypt
 import os
-from flask import Flask, render_template, request, url_for, redirect, abort
+from flask import Flask, render_template, request, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
 #from dotenv import load_dotenv
@@ -31,7 +31,7 @@ class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
-    name = db.Column(db.String(40), nullable=False)
+    name = db.Column(db.String(40))
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
