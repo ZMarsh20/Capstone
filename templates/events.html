@@ -4,6 +4,25 @@
 {% block content %}
 <h1>Events</h1>
 <br>
-
+{% if eventsList|length > 0 %}
+<table>
+    <tr>
+        <th>Event Title</th>
+        <th>Start Time</th>
+        <th>End Time</th>
+        <th>Scanner Code</th>
+    </tr>
+    {% for event in eventsList %}
+    <tr id="{{event.id}}" onclick="view(this)">
+        <td> {{event.event}} </td>
+        <td> {{event.startTime}} </td>
+        <td> {{event.endTime}} </td>
+        <td> {{event.code}} </td>
+        <td><a href="\delete\{{event.id}}" style="color:red;">Remove Event</a></td>
+    </tr>
+    {% endfor %}
+</table>
+{%endif%}
+<script src="/static/read.js"></script>
 <br>
 {%endblock%}

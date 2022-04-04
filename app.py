@@ -26,18 +26,46 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login = False
+addwrong = False
 
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
     name = db.Column(db.String(40))
+    events = db.relationship('Events', backref='users', lazy=True)
+
+class Events(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    event = db.Column(db.String(45), unique=True, nullable=False)
+    startTime = db.Column(db.DateTime, nullable=False)
+    endTime = db.Column(db.DateTime, nullable=False)
+    code = db.Column(db.Integer, nullable=False)
+    user = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+
+def timeformat(s):
+    return s.replace("T"," ") + ":00"
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    global addwrong
+    addwrong = False
     if login:
-        eventsList = []
-        return render_template("events.html",login=login)
+        if request.method == 'POST':
+            event = Events( event=request.form['eName'],
+                            startTime=timeformat(request.form['start']),
+                            endTime=timeformat(request.form['end']),
+                            code=request.form['code'], user=current_user.id)
+            if event.endTime > event.startTime:
+                db.session.add(event)
+                db.session.commit()
+            else:
+                addwrong = True
+                redirect(url_for("add"))
+        eventsList = Events.query.filter_by(user=current_user.id).all()
+        print(eventsList)
+        return render_template("events.html",login=login, eventsList=eventsList)
     return render_template("home.html", login=login)
 
 @login_manager.user_loader
@@ -101,7 +129,7 @@ def view(i):
 @app.route('/add', methods=['GET','POST'])
 def add():
     if login:
-        return "add"
+        return render_template('add.html')
     return redirect(url_for("sign_in"))
 
 checkList = []
@@ -206,4 +234,4 @@ def err404(err):
     return render_template('error.html', err=err)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", debug=True)
