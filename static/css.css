@@ -54,8 +54,11 @@ tr:nth-child(even) {
 tr:nth-child(odd) {
     background-color: grey;
 }
+input[type=text], input[type=password] {
+    width: 300px;
+}
 input, select, textarea, button {
-    margin: 20px;
+    margin: 10px;
     text-align: center;
     margin-left: auto;
     margin-right: auto;

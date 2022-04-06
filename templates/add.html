@@ -3,16 +3,19 @@
 
 {% block content %}
     <h1>Get a new event set up!</h1>
-    <form action="/" method="post">
+    <form action="/" onsubmit="return check()" method="post">
         <label id="leName" for="eName">Event Name: </label><br>
-        <input id="eName" name="eName" type="text" maxlength="50" oninput="one()" required><br>
+        <input id="eName" name="eName" type="text" maxlength="50" required><br>
         <label id="lstart" for="start">Start time: </label><br>
-        <input id="start" name="start" type="datetime-local"><br>
+        <input id="start" name="start" type="datetime-local" step="600"><br>
         <label id="lend" for="start">End time: </label><br>
-        <input id="end" name="end" type="datetime-local"><br>
+        <input id="end" name="end" type="datetime-local" step="600"><br>
         <label id="lcode" for="code">Input scanner code: </label><br>
-        <input id="code" name="code" type="number" min="1000" max="9999" step="1"><br>
+        <input id="code" name="code" type="number" min="1000" max="9999" step="1" required><br>
         <input id="submit" type="submit">
     </form>
     <script src="/static/add.js"></script>
+    {% if addwrong %}
+        <script>nameTaken();</script>
+    {%endif%}
 {%endblock%}

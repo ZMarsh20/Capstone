@@ -57,16 +57,15 @@ def home():
                             startTime=timeformat(request.form['start']),
                             endTime=timeformat(request.form['end']),
                             code=request.form['code'], user=current_user.id)
-            if event.endTime > event.startTime:
+            if Events.query.filter_by(event=event.event) is None:
                 db.session.add(event)
                 db.session.commit()
             else:
                 addwrong = True
-                redirect(url_for("add"))
+                return redirect(url_for("add"))
         eventsList = Events.query.filter_by(user=current_user.id).all()
-        print(eventsList)
-        return render_template("events.html",login=login, eventsList=eventsList)
-    return render_template("home.html", login=login)
+        return render_template("events.html", eventsList=eventsList)
+    return render_template("home.html", login=(not login))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -87,7 +86,7 @@ def sign_up():
     wrong = False
     wasSignUp = True
     if current_user.is_authenticated:
-        return render_template('logout.html', login=login)
+        return render_template('logout.html', login=(not login))
     if request.method == 'POST':
         name = request.form['name']
         if len(name) < 1:
@@ -95,7 +94,7 @@ def sign_up():
         user = Users(username=request.form['newusername'],
                      password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
                      name=name)
-        if Users.query.filter_by(username=user.username).first() == None:
+        if Users.query.filter_by(username=user.username).first() is None:
             db.session.add(user)
             db.session.commit()
             login_user(user)
@@ -103,7 +102,7 @@ def sign_up():
             return redirect(url_for('home'))
         else:
             wrong = True
-    return render_template('login.html', login=login, wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/sign_in', methods=['GET','POST'])
 def sign_in():
@@ -111,16 +110,16 @@ def sign_in():
     wrong = False
     wasSignUp = False
     if current_user.is_authenticated:
-        return render_template('logout.html', login=login)
+        return render_template('logout.html', login=(not login))
     if request.method == 'POST':
         user = Users.query.filter_by(username=request.form['username']).first()
-        if user != None and sha256_crypt.verify(request.form['password']+app.config['SECRET_KEY'], user.password):
+        if user is not None and sha256_crypt.verify(request.form['password']+app.config['SECRET_KEY'], user.password):
             login_user(user)
             login = True
             return redirect(url_for('home'))
         else:
             wrong = True
-    return render_template('login.html', login=login, wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/view/<i>')
 def view(i):
@@ -128,8 +127,9 @@ def view(i):
 
 @app.route('/add', methods=['GET','POST'])
 def add():
+    global addwrong
     if login:
-        return render_template('add.html')
+        return render_template('add.html', addwrong=addwrong)
     return redirect(url_for("sign_in"))
 
 checkList = []
