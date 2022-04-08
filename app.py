@@ -1,5 +1,7 @@
 import datetime
 import flask_mysqldb
+import random
+import time
 from passlib.hash import sha256_crypt
 import os
 from flask import Flask, render_template, request, url_for, redirect
@@ -27,6 +29,9 @@ login_manager = LoginManager(app)
 login_manager.init_app(app)
 login = False
 addwrong = False
+code = 0
+timer = None
+tmpUser = None
 
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -80,9 +85,22 @@ def logout():
     login = False
     return redirect(url_for('home'))
 
+@app.route('/e-auth')
+@login_required
+def emailAuth():
+    global login, tmpUser, code, timer
+    if request.method == "POST":
+        if request.form["pword"] == code and (time.time()-timer) < (10*1000*60):
+            db.session.add(tmpUser)
+            db.session.commit()
+            login_user(tmpUser)
+            tmpUser = None
+            login = True
+    return redirect(url_for('home'))
+
 @app.route('/sign_up', methods=['GET','POST'])
 def sign_up():
-    global login
+    global login, tmpUser, code, timer
     wrong = False
     wasSignUp = True
     if current_user.is_authenticated:
@@ -95,11 +113,11 @@ def sign_up():
                      password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
                      name=name)
         if Users.query.filter_by(username=user.username).first() is None:
-            db.session.add(user)
-            db.session.commit()
-            login_user(user)
-            login = True
-            return redirect(url_for('home'))
+            code = random.randint(0,999999999)
+            timer = time.time()
+            #send email
+            tmpUser = user
+            return render_template('emailAuth.html')
         else:
             wrong = True
     return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)

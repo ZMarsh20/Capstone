@@ -7,15 +7,15 @@
         <label id="leName" for="eName">Event Name: </label><br>
         <input id="eName" name="eName" type="text" maxlength="50" required><br>
         <label id="lstart" for="start">Start time: </label><br>
-        <input id="start" name="start" type="datetime-local" step="600"><br>
+        <input id="start" name="start" type="datetime-local"><br>
         <label id="lend" for="start">End time: </label><br>
-        <input id="end" name="end" type="datetime-local" step="600"><br>
+        <input id="end" name="end" type="datetime-local"><br>
         <label id="lcode" for="code">Input scanner code: </label><br>
         <input id="code" name="code" type="number" min="1000" max="9999" step="1" required><br>
         <input id="submit" type="submit">
     </form>
     <script src="/static/add.js"></script>
     {% if addwrong %}
-        <script>nameTaken();</script>
+        <script>nameTaken()</script>
     {%endif%}
 {%endblock%}

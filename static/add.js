@@ -1,18 +1,19 @@
-var name = document.getElementById("eName");
+var eName = document.getElementById("eName");
 var start = document.getElementById("start");
 var end = document.getElementById("end");
 var date = new Date()
 var offset = date.getTimezoneOffset();
-date.setMinutes(date.getMinutes()-offset-1);
+date.setMinutes(date.getMinutes()-offset);
+date.setSeconds(0);
 date = date.toISOString().split('.')[0];
 
 function nameTaken() {
     alert("Event name is already taken");
-    name.style.backgroundColor = "red";
+    eName.style.backgroundColor = "red";
 }
 function check() {
     if(end.value < start.value || (start.value + ":00") < date){
-        alert("Dates do not make sense")
+        alert("Dates do not make sense");
         start.style.backgroundColor = "red";
         end.style.backgroundColor = "red";
         return false;
