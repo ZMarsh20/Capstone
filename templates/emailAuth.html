@@ -1,9 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Verify{%endblock%}
 
-<form action="\" method="POST">
+{% block content %}
+
+{% if wrong %}
+<script>
+  alert("That is either the wrong code or time has expired for that code. \nPlease try another code or try to sign up again.");
+</script>
+{%endif%}
+
+<form action="\e-auth" method="POST">
   <label for="pword">Verify the code sent to your email:</label><br>
-  <input id="pword" type="number" style="width: 100" step="1">
+  <input id="pword" name="pword" type="number" style="width: 100" step="1">
   <input type="submit">
 </form>
 

@@ -2,6 +2,7 @@ import datetime
 import flask_mysqldb
 import random
 import time
+from flask_mail import Mail, Message
 from passlib.hash import sha256_crypt
 import os
 from flask import Flask, render_template, request, url_for, redirect
@@ -18,12 +19,20 @@ app.config['MYSQL_USER'] = 'root'#'victorf8'
 app.config['MYSQL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
+app.config['MAIL_PASSWORD'] = '&capstoneCS_495&'#os.getenv("PASSWORD")
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/cs_495'
 #'mysql://victorf8:'+ os.getenv("PASSWORD") +'@victorf8.mysql.pythonanywhere-services.com/victorf8$cs_495'
 app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
 
 mysql = flask_mysqldb.MySQL(app)
 db = SQLAlchemy(app)
+mail = Mail(app)
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
@@ -85,17 +94,16 @@ def logout():
     login = False
     return redirect(url_for('home'))
 
-@app.route('/e-auth')
-@login_required
+@app.route('/e-auth',methods=['GET','POST'])
 def emailAuth():
     global login, tmpUser, code, timer
     if request.method == "POST":
-        if request.form["pword"] == code and (time.time()-timer) < (10*1000*60):
+        if request.form["pword"] == str(code) and (time.time()-timer) < (10*60):
             db.session.add(tmpUser)
             db.session.commit()
             login_user(tmpUser)
             tmpUser = None
-            login = True
+            return render_template('emailAuth.html', wrong=True)
     return redirect(url_for('home'))
 
 @app.route('/sign_up', methods=['GET','POST'])
@@ -113,13 +121,15 @@ def sign_up():
                      password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
                      name=name)
         if Users.query.filter_by(username=user.username).first() is None:
-            code = random.randint(0,999999999)
-            timer = time.time()
-            #send email
-            tmpUser = user
-            return render_template('emailAuth.html')
-        else:
-            wrong = True
+            if "western.edu" in user.username.split('@')[-1]:
+                code = random.randint(100000000,999999999)
+                timer = time.time()
+                msg = Message('Email Confirmation Code', recipients=[user.username])
+                msg.body = 'Here is your confirmation code: ' + str(code)
+                mail.send(msg)
+                tmpUser = user
+                return render_template('emailAuth.html', login=(not login))
+        wrong = True
     return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/sign_in', methods=['GET','POST'])
