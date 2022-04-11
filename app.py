@@ -22,7 +22,7 @@ app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
-app.config['MAIL_PASSWORD'] = '&capstoneCS_495&'#os.getenv("PASSWORD")
+app.config['MAIL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
