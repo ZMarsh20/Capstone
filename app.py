@@ -21,7 +21,7 @@ app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
+app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
 app.config['MAIL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
@@ -37,7 +37,7 @@ mail = Mail(app)
 login_manager = LoginManager(app)
 login_manager.init_app(app)
 login = False
-addwrong = False
+addwrong = addwrong2 = False
 code = 0
 timer = None
 tmpUser = None
@@ -61,19 +61,31 @@ class Events(db.Model):
 def timeformat(s):
     return s.replace("T"," ") + ":00"
 
+def codeTaken(event):
+    codes = Events.query.filter_by(code=event.code)
+    for code in codes:
+        if str(code.startTime) < event.startTime < str(code.endTime) \
+            or str(code.startTime) < event.endTime < str(code.endTime):
+            return False
+    return True
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    global addwrong
-    addwrong = False
+    global addwrong, addwrong2
+    addwrong = addwrong2 = False
     if login:
         if request.method == 'POST':
             event = Events( event=request.form['eName'],
                             startTime=timeformat(request.form['start']),
                             endTime=timeformat(request.form['end']),
                             code=request.form['code'], user=current_user.id)
-            if Events.query.filter_by(event=event.event) is None:
-                db.session.add(event)
-                db.session.commit()
+            if Events.query.filter_by(event=event.event) is not None:
+                if codeTaken(event):
+                    db.session.add(event)
+                    db.session.commit()
+                else:
+                    addwrong2 = True
+                    return redirect(url_for("add"))
             else:
                 addwrong = True
                 return redirect(url_for("add"))
@@ -103,8 +115,10 @@ def emailAuth():
             db.session.commit()
             login_user(tmpUser)
             tmpUser = None
-            return render_template('emailAuth.html', wrong=True)
-    return redirect(url_for('home'))
+            code = 0
+            login = True
+            return redirect(url_for('home'))
+    return render_template('emailAuth.html', wrong=True)
 
 @app.route('/sign_up', methods=['GET','POST'])
 def sign_up():
@@ -155,9 +169,9 @@ def view(i):
 
 @app.route('/add', methods=['GET','POST'])
 def add():
-    global addwrong
+    global addwrong, addwrong2
     if login:
-        return render_template('add.html', addwrong=addwrong)
+        return render_template('add.html', addwrong=addwrong, addwrong2=addwrong2)
     return redirect(url_for("sign_in"))
 
 checkList = []

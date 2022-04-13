@@ -17,5 +17,9 @@
     <script src="/static/add.js"></script>
     {% if addwrong %}
         <script>nameTaken()</script>
+    {%else%}
+        {% if addwrong2 %}
+            <script>codeTaken()</script>
+        {%endif%}
     {%endif%}
 {%endblock%}
