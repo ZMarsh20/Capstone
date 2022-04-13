@@ -19,7 +19,7 @@ function codeTaken() {
 
 function check() {
     if(end.value <= start.value || (start.value + ":00") < date){
-        alert("Dates do not make sense");
+        alert("Dates do not make sense.\nMake sure they aren't in the past and the end is after the start.");
         start.style.backgroundColor = "red";
         end.style.backgroundColor = "red";
         return false;

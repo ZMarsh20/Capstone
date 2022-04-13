@@ -18,7 +18,10 @@
         <td> {{event.startTime}} </td>
         <td> {{event.endTime}} </td>
         <td> {{event.code}} </td>
-        <td><a href="\delete\{{event.id}}" style="color:red;">Remove Event</a></td>
+        <td><a href="\delete\{{event.id}}" style="color: red;">Remove Event</a></td>
+        {% if event.startTime|string > currentTime %}
+        <td><a href="\update\{{event.id}}">Update Event</a></td>
+        {%endif%}
     </tr>
     {% endfor %}
 </table>

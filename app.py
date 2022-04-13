@@ -2,12 +2,13 @@ import datetime
 import flask_mysqldb
 import random
 import time
+from datetime import datetime
 from flask_mail import Mail, Message
 from passlib.hash import sha256_crypt
-import os
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, abort, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
+import os
 #from dotenv import load_dotenv
 #project_folder = os.path.expanduser('~/mysite')
 #load_dotenv(os.path.join(project_folder, '.env'))
@@ -36,11 +37,6 @@ mail = Mail(app)
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
-login = False
-addwrong = addwrong2 = False
-code = 0
-timer = None
-tmpUser = None
 
 class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,34 +60,41 @@ def timeformat(s):
 def codeTaken(event):
     codes = Events.query.filter_by(code=event.code)
     for code in codes:
-        if str(code.startTime) < event.startTime < str(code.endTime) \
-            or str(code.startTime) < event.endTime < str(code.endTime):
+        if str(code.startTime) <= event.startTime <= str(code.endTime) \
+            or str(code.startTime) <= event.endTime <= str(code.endTime):
             return False
     return True
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    global addwrong, addwrong2
-    addwrong = addwrong2 = False
-    if login:
+    session['delete'] = session['addwrong'] = session['addwrong2'] = False
+    if current_user.is_authenticated:
         if request.method == 'POST':
             event = Events( event=request.form['eName'],
                             startTime=timeformat(request.form['start']),
                             endTime=timeformat(request.form['end']),
                             code=request.form['code'], user=current_user.id)
-            if Events.query.filter_by(event=event.event) is not None:
+            if Events.query.filter_by(event=event.event) is not None or session['update']:
                 if codeTaken(event):
-                    db.session.add(event)
+                    if session['update']:
+                        temp = Events.query.filter_by(event=event.event).first()
+                        temp.startTime = event.startTime
+                        temp.endTime = event.endTime
+                        temp.code = event.code
+                    else:
+                        db.session.add(event)
                     db.session.commit()
+                    session['update'] = False
                 else:
-                    addwrong2 = True
-                    return redirect(url_for("add"))
+                    session['addwrong2'] = True
+                    return '<script>document.location.href = document.referrer</script>'
             else:
-                addwrong = True
-                return redirect(url_for("add"))
+                session['addwrong'] = True
+                return '<script>document.location.href = document.referrer</script>'
         eventsList = Events.query.filter_by(user=current_user.id).all()
-        return render_template("events.html", eventsList=eventsList)
-    return render_template("home.html", login=(not login))
+        currentTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return render_template("events.html", eventsList=eventsList, currentTime=currentTime)
+    return render_template("home.html", login=(not current_user.is_authenticated))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -101,32 +104,28 @@ def load_user(user_id):
 @app.route('/logout')
 @login_required
 def logout():
-    global login
     logout_user()
-    login = False
     return redirect(url_for('home'))
 
 @app.route('/e-auth',methods=['GET','POST'])
+@login_required
 def emailAuth():
-    global login, tmpUser, code, timer
     if request.method == "POST":
-        if request.form["pword"] == str(code) and (time.time()-timer) < (10*60):
-            db.session.add(tmpUser)
+        if request.form["pword"] == str(session['code']) and (time.time()-session['timer']) < (10*60):
+            db.session.add(session['tmpUser'])
             db.session.commit()
-            login_user(tmpUser)
-            tmpUser = None
-            code = 0
-            login = True
+            login_user(session['tmpUser'])
+            session.pop('tmpUser',None)
+            session.pop('code', None)
             return redirect(url_for('home'))
     return render_template('emailAuth.html', wrong=True)
 
 @app.route('/sign_up', methods=['GET','POST'])
 def sign_up():
-    global login, tmpUser, code, timer
     wrong = False
     wasSignUp = True
     if current_user.is_authenticated:
-        return render_template('logout.html', login=(not login))
+        return render_template('logout.html', login=(not current_user.is_authenticated))
     if request.method == 'POST':
         name = request.form['name']
         if len(name) < 1:
@@ -136,43 +135,66 @@ def sign_up():
                      name=name)
         if Users.query.filter_by(username=user.username).first() is None:
             if "western.edu" in user.username.split('@')[-1]:
-                code = random.randint(100000000,999999999)
-                timer = time.time()
+                session['code'] = random.randint(100000000,999999999)
+                session['timer'] = time.time()
                 msg = Message('Email Confirmation Code', recipients=[user.username])
-                msg.body = 'Here is your confirmation code: ' + str(code)
+                msg.body = 'Here is your confirmation code: ' + str(session['code'])
                 mail.send(msg)
-                tmpUser = user
-                return render_template('emailAuth.html', login=(not login))
+                session['tmpUser'] = user
+                return render_template('emailAuth.html', login=(not current_user.is_authenticated))
         wrong = True
-    return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=(not current_user.is_authenticated), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/sign_in', methods=['GET','POST'])
 def sign_in():
-    global login
     wrong = False
     wasSignUp = False
     if current_user.is_authenticated:
-        return render_template('logout.html', login=(not login))
+        return render_template('logout.html', login=(not current_user.is_authenticated))
     if request.method == 'POST':
         user = Users.query.filter_by(username=request.form['username']).first()
         if user is not None and sha256_crypt.verify(request.form['password']+app.config['SECRET_KEY'], user.password):
             login_user(user)
-            login = True
             return redirect(url_for('home'))
         else:
             wrong = True
-    return render_template('login.html', login=(not login), wrong=wrong, wasSignUp=wasSignUp)
+    return render_template('login.html', login=(not current_user.is_authenticated), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/view/<i>')
 def view(i):
     return "view"
 
 @app.route('/add', methods=['GET','POST'])
+@login_required
 def add():
-    global addwrong, addwrong2
-    if login:
-        return render_template('add.html', addwrong=addwrong, addwrong2=addwrong2)
-    return redirect(url_for("sign_in"))
+    session['update'] = False
+    return render_template('add.html', addwrong=session['addwrong'], addwrong2=session['addwrong2'])
+
+@app.route('/update/<i>', methods=['GET','POST'])
+@login_required
+def update(i):
+    session['update'] = True
+    event = Events.query.filter_by(id=i).first()
+    if str(event.startTime) <= datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+        abort(401)
+    return render_template('update.html', event=event, addwrong2=session['addwrong2'])
+
+@app.route('/delete/<i>', methods=['GET','POST'])
+@login_required
+def delete(i):
+    if session['delete']:
+        event = Events.query.filter_by(id=i).first()
+        session['delete'] = False
+        if datetime.now().strftime("%Y-%m-%d %H:%M:%S") < str(event.startTime):
+            db.session.delete(event)
+        else:
+            event.event = "REMOVED BY USER " + event.user
+            event.user = event.code = 0
+        db.session.commit()
+        return redirect(url_for("home"))
+    else:
+        session['delete'] = True
+        return '<script src="/static/delete.js"></script><script>deleter(' + i + ')</script>'
 
 checkList = []
 
@@ -273,7 +295,11 @@ def attend():
 
 @app.errorhandler(404)
 def err404(err):
-    return render_template('error.html', err=err)
+    return render_template('error.html', err=err, login=(not current_user.is_authenticated))
+
+@app.errorhandler(401)
+def err401(err):
+    return render_template('error.html', err=err, login=(not current_user.is_authenticated))
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
+    app.run()
