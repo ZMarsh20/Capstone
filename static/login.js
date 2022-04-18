@@ -56,7 +56,7 @@ function normal() {
     }
 }
 function usernameTaken() {
-    alert("Username taken. Try again");
+    alert("Username taken or invalid. Must be a valid email.\n Please try again");
     newusername.style.backgroundColor = "red";
 }
 function tryAgain() {

@@ -1,6 +1,62 @@
 {% extends "base.html" %}
-{% block title %}View Club{%endblock%}
+{% block title %}View Event{%endblock%}
 
 {% block content %}
+<form action="/view/{{eventNum}}" method="POST">
 
+    <select id="sex" name="sex">
+        {% for key, val in sexs.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+
+    <select id="race" name="race">
+        {% for key, val in races.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+
+    <select id="major1" name="major1">
+        {% for key, val in majors.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+    <select id="minor1" name="minor1">
+        {% for key, val in majors.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+    <select id="major2" name="major2">
+        {% for key, val in majors.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+    <select id="minor2" name="minor2">
+        {% for key, val in majors.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+
+    <select id="housing" name="housing">
+        {% for key, val in housings.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+
+    <select id="grad" name="grad">
+        {% for key, val in grads.items() %}
+        <option value="{{key}}">{{val|title}}</option>
+        {%endfor%}
+    </select>
+
+    <input type="number" id="ageStart" name="ageStart" min="0" max = 99>
+    <input type="number" id="ageEnd" name="ageEnd" min="0" max="99">
+
+    <input type="number" id="gradStart" name="gradStart" min="0" max = 99>
+    <input type="number" id="gradEnd" name="gradEnd" min="0" max="99">
+
+    <input type="checkbox" id="latinx" name="latinx">
+    <input type="checkbox" id="transfer" name="transfer">
+
+</form>
 {%endblock%}

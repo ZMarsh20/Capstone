@@ -1,4 +1,3 @@
-import datetime
 import flask_mysqldb
 import random
 import time
@@ -8,7 +7,7 @@ from passlib.hash import sha256_crypt
 from flask import Flask, render_template, request, url_for, redirect, abort, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
-import os
+#import os
 #from dotenv import load_dotenv
 #project_folder = os.path.expanduser('~/mysite')
 #load_dotenv(os.path.join(project_folder, '.env'))
@@ -23,7 +22,7 @@ app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
-app.config['MAIL_PASSWORD'] = ''#os.getenv("PASSWORD")
+app.config['MAIL_PASSWORD'] = '&CS495capstone&'#os.getenv("PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
@@ -34,6 +33,9 @@ app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
 mysql = flask_mysqldb.MySQL(app)
 db = SQLAlchemy(app)
 mail = Mail(app)
+
+#os.environ["TZ"] = "America/Denver"
+#time.tzset()
 
 login_manager = LoginManager(app)
 login_manager.init_app(app)
@@ -74,7 +76,7 @@ def home():
                             startTime=timeformat(request.form['start']),
                             endTime=timeformat(request.form['end']),
                             code=request.form['code'], user=current_user.id)
-            if Events.query.filter_by(event=event.event) is not None or session['update']:
+            if (Events.query.filter_by(event=event.event).first() is None and "REMOVED" not in event.event) or session['update']:
                 if codeTaken(event):
                     if session['update']:
                         temp = Events.query.filter_by(event=event.event).first()
@@ -108,14 +110,18 @@ def logout():
     return redirect(url_for('home'))
 
 @app.route('/e-auth',methods=['GET','POST'])
-@login_required
 def emailAuth():
     if request.method == "POST":
         if request.form["pword"] == str(session['code']) and (time.time()-session['timer']) < (10*60):
-            db.session.add(session['tmpUser'])
+            user = Users(username=session['tmpUser.username'],
+                         password=session['tmpUser.password'],
+                         name=session['tmpUser.name'])
+            db.session.add(user)
             db.session.commit()
-            login_user(session['tmpUser'])
-            session.pop('tmpUser',None)
+            login_user(user)
+            session.pop('tmpUser.username',None)
+            session.pop('tmpUser.password',None)
+            session.pop('tmpUser.name',None)
             session.pop('code', None)
             return redirect(url_for('home'))
     return render_template('emailAuth.html', wrong=True)
@@ -134,13 +140,15 @@ def sign_up():
                      password=sha256_crypt.encrypt(request.form['newpassword']+app.config['SECRET_KEY']),
                      name=name)
         if Users.query.filter_by(username=user.username).first() is None:
-            if "western.edu" in user.username.split('@')[-1]:
+            if "@" in user.username and "western.edu" in user.username.split('@')[-1]:
                 session['code'] = random.randint(100000000,999999999)
                 session['timer'] = time.time()
                 msg = Message('Email Confirmation Code', recipients=[user.username])
                 msg.body = 'Here is your confirmation code: ' + str(session['code'])
                 mail.send(msg)
-                session['tmpUser'] = user
+                session['tmpUser.username'] = user.username
+                session['tmpUser.password'] = user.password
+                session['tmpUser.name'] = user.name
                 return render_template('emailAuth.html', login=(not current_user.is_authenticated))
         wrong = True
     return render_template('login.html', login=(not current_user.is_authenticated), wrong=wrong, wasSignUp=wasSignUp)
@@ -160,9 +168,29 @@ def sign_in():
             wrong = True
     return render_template('login.html', login=(not current_user.is_authenticated), wrong=wrong, wasSignUp=wasSignUp)
 
-@app.route('/view/<i>')
+@app.route('/view/<i>', methods=['GET','POST'])
 def view(i):
-    return "view"
+    sexs = {}
+    races = {}
+    majors = {}
+    housings = {}
+    grads = {}
+    if request.method == "POST":
+        results = """select sex.sex as "Sex", race.race as "Ethnicity", age as "Age", gradYear as "Grad Year", 
+                maj.major as "Major", min.major as "Minor", maj2.major as "Second Major", min2.major as "Second Minor", 
+                case when program=0 then "undergrad" else "graduate" end as "Program", 
+                case when housing=0 then "off" else "on" end as "Housing", 
+                case when transfer=0 then "is not" else "is" end as "Transferer", 
+                case when latinx=0 then "is not" else "is" end as "Latinx", access as "Access" from attendance 
+                join sex on attendance.sex=sex.id 
+                join race on attendance.race=race.id
+                join majors maj on attendance.major = maj.id
+                join majors min on attendance.minor = min.id
+                join majors maj2 on attendance.major2 = maj2.id
+                join majors min2 on attendance.minor2 = min2.id;"""
+        render_template('results.html', results=results)
+    return render_template('view.html', eventNum=i,
+                           sexs=sexs, races=races, majors=majors, housings=housings, grads=grads)
 
 @app.route('/add', methods=['GET','POST'])
 @login_required
@@ -190,6 +218,7 @@ def delete(i):
         else:
             event.event = "REMOVED BY USER " + event.user
             event.user = event.code = 0
+            event.endTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.session.commit()
         return redirect(url_for("home"))
     else:
@@ -214,16 +243,19 @@ def setUpCheckList():
 
     cursor.execute("select count(*) from majors")           # number of options that the major could be
     count = cursor.fetchone()[0]
-    checkList.append(count)
-    checkList.append(count)                                 # a second time for the second major
+    for _ in range(4):
+        checkList.append(count)                             # four times for (major, minor, major2, minor2)
 
     checkList.append(99)                                    # grad year should not be more than double digits
+
+    for _ in range(4):
+        checkList.append(1)                                 # four booleans (program, housing(on/off), transfer, latinx)
 
 def checkString(s):
     global checkList
     try:
         data = s.split('/')
-        if len(data) != 8:
+        if len(data) != len(checkList)+3:
             raise Exception
 
         for instance in data:                               # should all be (able to be) ints
@@ -244,10 +276,10 @@ def checkString(s):
                 raise Exception
 
         cursor = mysql.connection.cursor()                  # testing 'code' for getting an event
-        # (see if 'code' is for real event)
 
+        # (see if 'code' is for real event)
         cursor.execute("select id from events where code = " + str(code) + ' and "'
-                       + str(datetime.datetime.now().replace(microsecond=0))
+                       + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                        + '" between startTime and endTime')
         if not cursor.fetchone():
             raise Exception
@@ -265,15 +297,16 @@ def putInDatabase(s):
     values += '"' + data[0] + '"'
     for i in range(1,len(data)):
         values += ', ' + data[i]
-        # put event foreign key id in place of the code in the string
+    # put event foreign key id in place of the code in the string
     cursor.execute("select id from events where code = " + str(code) + ' and "'
-                   + str(datetime.datetime.now().replace(microsecond=0))
+                   + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                    + '" between startTime and endTime')
     eventID = cursor.fetchone()[0]
 
     values += ', ' + str(eventID)
-    sql = "INSERT INTO attendance (stuID, sex, race, age, major, major2, gradYear, event)" \
-          " VALUES (" + values + ");"
+    sql = "INSERT INTO attendance (stuID, sex, race, age, major, minor, major2, minor2," \
+          " gradYear, program, housing, transfer, latinx, event, access)" \
+          " VALUES (" + values + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ");"
 
     cursor.execute(sql)
     mysql.connection.commit()
@@ -289,9 +322,9 @@ def attend():
             return 'failure'
     return 'failure'
 
-# @app.route('/test', methods=['GET', 'POST'])
-# def test():
-#     return render_template("test.html")
+@app.route('/test', methods=['GET', 'POST'])
+def test():
+    return render_template("test.html")
 
 @app.errorhandler(404)
 def err404(err):

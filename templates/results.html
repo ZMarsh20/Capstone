@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Results{%endblock%}
+
+{% block content %}
+<h1>Results:</h1>
+<br>
+{% if eventsList|length > 0 %}
+<table>
+    <tr>
+        <th>StuID</th>
+        <th>Sex</th>
+        <th>Race</th>
+        <th>Age</th>
+        <th>Grad Year</th>
+        <th>Major</th>
+        <th>Minor</th>
+        <th>Second Major</th>
+        <th>Second Minor</th>
+        <th>Housing</th>
+        <th>Transfer</th>
+        <th>Program</th>
+        <th>Latinx</th>
+    </tr>
+    {% for result in results %}
+    <tr>
+        {% for res in result %}
+        <td>{{res}}</td>
+        {%endfor%}
+    </tr>
+    {% endfor %}
+</table>
+{%endif%}
+<br>
+{%endblock%}
