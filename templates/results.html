@@ -2,9 +2,10 @@
 {% block title %}Results{%endblock%}
 
 {% block content %}
+<a href="/view/{{eventNum}}"><-back</a>
 <h1>Results:</h1>
 <br>
-{% if eventsList|length > 0 %}
+{% if results|length > 0 %}
 <table>
     <tr>
         <th>StuID</th>
@@ -16,19 +17,22 @@
         <th>Minor</th>
         <th>Second Major</th>
         <th>Second Minor</th>
+        <th>Program</th>
         <th>Housing</th>
         <th>Transfer</th>
-        <th>Program</th>
         <th>Latinx</th>
+        <th>Access</th>
     </tr>
     {% for result in results %}
     <tr>
         {% for res in result %}
-        <td>{{res}}</td>
+        <td>{{res|title}}</td>
         {%endfor%}
     </tr>
     {% endfor %}
 </table>
+{%else%}
+<H1>Seems no one like that was there.</H1>
 {%endif%}
 <br>
 {%endblock%}

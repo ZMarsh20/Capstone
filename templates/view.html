@@ -2,8 +2,10 @@
 {% block title %}View Event{%endblock%}
 
 {% block content %}
-<form action="/view/{{eventNum}}" method="POST">
+<form id="viewForm" action="/view/{{eventNum}}" onsubmit="return check(event)" method="POST">
 
+    <label for="sex">Sex | </label>
+    <label for="race">Ethnicity</label><br>
     <select id="sex" name="sex">
         {% for key, val in sexs.items() %}
         <option value="{{key}}">{{val|title}}</option>
@@ -14,8 +16,12 @@
         {% for key, val in races.items() %}
         <option value="{{key}}">{{val|title}}</option>
         {%endfor%}
-    </select>
+    </select><br>
 
+    <br><label for="major1">Major |</label>
+    <label for="minor1">Minor |</label>
+    <label for="major2">2nd Major |</label>
+    <label for="minor2">2nd Minor</label><br>
     <select id="major1" name="major1">
         {% for key, val in majors.items() %}
         <option value="{{key}}">{{val|title}}</option>
@@ -35,8 +41,10 @@
         {% for key, val in majors.items() %}
         <option value="{{key}}">{{val|title}}</option>
         {%endfor%}
-    </select>
+    </select><br>
 
+    <br><label for="housing">Housing | </label>
+    <label for="grad">Program</label><br>
     <select id="housing" name="housing">
         {% for key, val in housings.items() %}
         <option value="{{key}}">{{val|title}}</option>
@@ -47,16 +55,24 @@
         {% for key, val in grads.items() %}
         <option value="{{key}}">{{val|title}}</option>
         {%endfor%}
-    </select>
+    </select><br>
 
+    <br><label for="ageStart"> Age Range :</label>
     <input type="number" id="ageStart" name="ageStart" min="0" max = 99>
+    <label for="ageEnd"> to </label>
     <input type="number" id="ageEnd" name="ageEnd" min="0" max="99">
 
+    <br><label for="gradStart">Grad Range:</label>
     <input type="number" id="gradStart" name="gradStart" min="0" max = 99>
+    <label for="gradEnd"> to </label>
     <input type="number" id="gradEnd" name="gradEnd" min="0" max="99">
 
+    <br><br><label for="latinx">Latinx</label>
     <input type="checkbox" id="latinx" name="latinx">
+    <br><label for="transfer">Transfer</label>
     <input type="checkbox" id="transfer" name="transfer">
 
+    <br><br><input type="submit">
 </form>
+<script src="/static/view.js"></script>
 {%endblock%}

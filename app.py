@@ -169,27 +169,110 @@ def sign_in():
     return render_template('login.html', login=(not current_user.is_authenticated), wrong=wrong, wasSignUp=wasSignUp)
 
 @app.route('/view/<i>', methods=['GET','POST'])
+@login_required
 def view(i):
-    sexs = {}
-    races = {}
-    majors = {}
-    housings = {}
-    grads = {}
+    j = i
+    eventUser = Events.query.filter_by(id=j).first()
+    if eventUser is None or eventUser.user != current_user.id:
+        abort(401)
+    cursor = mysql.connection.cursor()
     if request.method == "POST":
-        results = """select sex.sex as "Sex", race.race as "Ethnicity", age as "Age", gradYear as "Grad Year", 
-                maj.major as "Major", min.major as "Minor", maj2.major as "Second Major", min2.major as "Second Minor", 
-                case when program=0 then "undergrad" else "graduate" end as "Program", 
-                case when housing=0 then "off" else "on" end as "Housing", 
-                case when transfer=0 then "is not" else "is" end as "Transferer", 
-                case when latinx=0 then "is not" else "is" end as "Latinx", access as "Access" from attendance 
-                join sex on attendance.sex=sex.id 
-                join race on attendance.race=race.id
-                join majors maj on attendance.major = maj.id
-                join majors min on attendance.minor = min.id
-                join majors maj2 on attendance.major2 = maj2.id
-                join majors min2 on attendance.minor2 = min2.id;"""
-        render_template('results.html', results=results)
-    return render_template('view.html', eventNum=i,
+        resultsquery = """
+select attendance.stuID, sex.sex, race.race, age, gradYear, 
+maj.major, min.major, maj2.major, min2.major, 
+case when program=0 then "undergrad" else "graduate" end, 
+case when housing=0 then "on" else "off" end, 
+case when transfer=0 then "is not" else "is"end, 
+case when latinx=0 then "is not" else "is" end,
+access as "Access" from attendance 
+join sex on attendance.sex=sex.id 
+join race on attendance.race=race.id
+join majors maj on attendance.major = maj.id
+join majors min on attendance.minor = min.id
+join majors maj2 on attendance.major2 = maj2.id
+join majors min2 on attendance.minor2 = min2.id """
+        s = ""
+        if request.form['sex'] != '0':
+            s += "attendance.sex = " + request.form['sex']
+        if request.form['race'] != '0':
+            if s > "":
+                s += " and "
+            s += "attendance.race = " + request.form['race']
+        if request.form['major1'] != '0':
+            if s > "":
+                s += " and "
+            s += "attendance.major = " + request.form['major1']
+        if request.form['minor1'] != '0':
+            if s > "":
+                s += " and "
+            s += "minor = " + request.form['minor1']
+        if request.form['major2'] != '0':
+            if s > "":
+                s += " and "
+            s += "major2 = " + request.form['major2']
+        if request.form['minor2'] != '0':
+            if s > "":
+                s += " and "
+            s += "minor2 = " + request.form['minor2']
+        if request.form['grad'] != '0':
+            if s > "":
+                s += " and "
+            s += "program = " + str(int(request.form['grad']) - 1)
+        if request.form['housing'] != '0':
+            if s > "":
+                s += " and "
+            s += "housing = " + str(int(request.form['housing']) - 1)
+        if request.form.get('latinx') is not None:
+            if s > "":
+                s += " and "
+            s += "latinx = 1"
+        if request.form.get('transfer') is not None:
+            if s > "":
+                s += " and "
+            s += "transfer = 1"
+
+        if request.form['gradStart'] != "":
+            if s > "":
+                s += " and "
+            if request.form['gradStart'] == request.form['gradEnd']:
+                s += "gradYear = " + request.form['gradStart']
+            else:
+                s += "gradYear between " + request.form['gradStart'] + " and " + request.form['gradEnd']
+        if request.form['ageStart'] != "":
+            if s > "":
+                s += " and "
+            if request.form['ageStart'] == request.form['ageEnd']:
+                s += "age = " + request.form['ageStart']
+            else:
+                s += "age between " + request.form['ageStart'] + " and " + request.form['ageEnd']
+
+        resultsquery += "where attendance.event = " + str(j)
+        if s > "":
+            resultsquery += " and " + s
+        resultsquery += " group by attendance.stuID"
+        print(resultsquery)
+        cursor.execute(resultsquery)
+        results = cursor.fetchall()
+        return render_template('results.html', eventNum=j, results=results)
+
+    cursor.execute("select sex from sex order by id")
+    s = cursor.fetchall()
+    sexs = {0:"any"}
+    for i in range(len(s)):
+        sexs[i+1] = s[i][0]
+    cursor.execute("select race from race order by id")
+    r = cursor.fetchall()
+    races = {0:"any"}
+    for i in range(len(r)):
+        races[i+1] = r[i][0]
+    cursor.execute("select major from majors order by id")
+    m = cursor.fetchall()
+    majors = {0:"any"}
+    for i in range(len(m)):
+        majors[i+1] = m[i][0]
+    housings = {0:"Both",1:"On Campus",2:"Off Campus"}
+    grads = {0:"Both",1:"Undergraduate",2:"Graduate"}
+    return render_template('view.html', eventNum=j,
                            sexs=sexs, races=races, majors=majors, housings=housings, grads=grads)
 
 @app.route('/add', methods=['GET','POST'])
@@ -201,6 +284,9 @@ def add():
 @app.route('/update/<i>', methods=['GET','POST'])
 @login_required
 def update(i):
+    eventUser = Events.query.filter_by(id=i).first()
+    if eventUser is None or eventUser.user != current_user.id:
+        abort(401)
     session['update'] = True
     event = Events.query.filter_by(id=i).first()
     if str(event.startTime) <= datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
@@ -210,13 +296,16 @@ def update(i):
 @app.route('/delete/<i>', methods=['GET','POST'])
 @login_required
 def delete(i):
+    eventUser = Events.query.filter_by(id=i).first()
+    if eventUser is None or eventUser.user != current_user.id:
+        abort(401)
     if session['delete']:
         event = Events.query.filter_by(id=i).first()
         session['delete'] = False
         if datetime.now().strftime("%Y-%m-%d %H:%M:%S") < str(event.startTime):
             db.session.delete(event)
         else:
-            event.event = "REMOVED BY USER " + event.user
+            event.event = "REMOVED BY USER " + str(event.user)
             event.user = event.code = 0
             event.endTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         db.session.commit()
