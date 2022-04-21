@@ -13,8 +13,8 @@
     </select>
 
     <select id="race" name="race">
-        {% for key, val in races.items() %}
-        <option value="{{key}}">{{val|title}}</option>
+        {% for val in races %}
+        <option value="{{val}}">{{val|title}}</option>
         {%endfor%}
     </select><br>
 
@@ -71,6 +71,8 @@
     <input type="checkbox" id="latinx" name="latinx">
     <br><label for="transfer">Transfer</label>
     <input type="checkbox" id="transfer" name="transfer">
+    <br><label for="lgbtq">LGBTQ+</label>
+    <input type="checkbox" id="lgbtq" name="lgbtq">
 
     <br><br><input type="submit">
 </form>

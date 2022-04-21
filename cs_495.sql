@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 20, 2022 at 09:55 PM
+-- Generation Time: Apr 21, 2022 at 07:35 AM
 -- Server version: 10.4.17-MariaDB
 -- PHP Version: 8.0.0
 
@@ -26,7 +26,8 @@ SET time_zone = "+00:00";
 --
 -- Table structure for table `attendance`
 --
-drop table if exists `attendance`;
+
+DROP TABLE IF EXISTS `attendance`;
 CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `stuID` varchar(6) NOT NULL,
@@ -42,6 +43,7 @@ CREATE TABLE `attendance` (
   `housing` tinyint(1) NOT NULL,
   `transfer` tinyint(1) NOT NULL,
   `latinx` tinyint(1) NOT NULL,
+  `lgbtq` tinyint(1) NOT NULL,
   `access` datetime NOT NULL DEFAULT current_timestamp(),
   `event` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -52,7 +54,7 @@ CREATE TABLE `attendance` (
 -- Table structure for table `events`
 --
 
-drop table if exists `events`;
+DROP TABLE IF EXISTS `events`;
 CREATE TABLE `events` (
   `id` int(11) NOT NULL,
   `event` varchar(45) NOT NULL,
@@ -68,7 +70,7 @@ CREATE TABLE `events` (
 -- Table structure for table `majors`
 --
 
-drop table if exists `majors`;
+DROP TABLE IF EXISTS `majors`;
 CREATE TABLE `majors` (
   `id` int(11) NOT NULL,
   `major` varchar(5) NOT NULL
@@ -114,10 +116,10 @@ INSERT INTO `majors` (`id`, `major`) VALUES
 -- Table structure for table `race`
 --
 
-drop table if exists `race`;
+DROP TABLE IF EXISTS `race`;
 CREATE TABLE `race` (
   `id` int(11) NOT NULL,
-  `race` varchar(25) NOT NULL
+  `race` varchar(40) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -132,7 +134,35 @@ INSERT INTO `race` (`id`, `race`) VALUES
 (5, 'indian'),
 (6, 'native american'),
 (8, 'other'),
-(1, 'white');
+(1, 'white'),
+(9, 'white / african american'),
+(10, 'white / hispanic'),
+(11, 'white / asian'),
+(12, 'white / asian pacific islander'),
+(13, 'white / indian'),
+(14, 'white / native american'),
+(15, 'white / other'),
+(16, 'african american / hispanic'),
+(17, 'african american / asian'),
+(18, 'african american / asian pacific islande'),
+(19, 'african american / indian'),
+(20, 'african american / native american'),
+(21, 'african american / other'),
+(22, 'hispanic / asian'),
+(23, 'hispanic / asian pacific islander'),
+(24, 'hispanic / indian'),
+(25, 'hispanic / native american'),
+(26, 'hispanic / other'),
+(27, 'asian / asian pacific islander'),
+(28, 'asian / indian'),
+(29, 'asian / native american'),
+(30, 'asian / other'),
+(31, 'asian pacific islander / indian'),
+(32, 'asian pacific islander / native american'),
+(33, 'asian pacific islander / other'),
+(34, 'indian / native american'),
+(35, 'indian / other'),
+(36, 'native american / other');
 
 -- --------------------------------------------------------
 
@@ -140,7 +170,7 @@ INSERT INTO `race` (`id`, `race`) VALUES
 -- Table structure for table `sex`
 --
 
-drop table if exists `sex`;
+DROP TABLE IF EXISTS `sex`;
 CREATE TABLE `sex` (
   `id` int(11) NOT NULL,
   `sex` varchar(6) NOT NULL
@@ -161,7 +191,7 @@ INSERT INTO `sex` (`id`, `sex`) VALUES
 -- Table structure for table `users`
 --
 
-drop table if exists `users`;
+DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(40) DEFAULT NULL,
@@ -186,26 +216,6 @@ ALTER TABLE `attendance`
 ALTER TABLE `events`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user` (`user`);
-
---
--- Indexes for table `majors`
---
-ALTER TABLE `majors`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `race`
---
-ALTER TABLE `race`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `race` (`race`);
-
---
--- Indexes for table `sex`
---
-ALTER TABLE `sex`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `sex` (`sex`);
 
 --
 -- Indexes for table `users`

@@ -21,8 +21,8 @@ app.config['MYSQL_DB'] = 'cs_495'#'victorf8$cs_495'
 
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
-app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME'] = 'spamm.western@gmail.com'
-app.config['MAIL_PASSWORD'] = '&CS495capstone&'#os.getenv("PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = app.config['MAIL_USERNAME'] = 'westerncapstone@gmail.com'
+app.config['MAIL_PASSWORD'] = ''#os.getenv("PASSWORD")
 app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USE_SSL'] = True
 
@@ -178,26 +178,27 @@ def view(i):
     cursor = mysql.connection.cursor()
     if request.method == "POST":
         resultsquery = """
-select attendance.stuID, sex.sex, race.race, age, gradYear, 
-maj.major, min.major, maj2.major, min2.major, 
-case when program=0 then "undergrad" else "graduate" end, 
-case when housing=0 then "on" else "off" end, 
-case when transfer=0 then "is not" else "is"end, 
-case when latinx=0 then "is not" else "is" end,
-access as "Access" from attendance 
-join sex on attendance.sex=sex.id 
-join race on attendance.race=race.id
-join majors maj on attendance.major = maj.id
-join majors min on attendance.minor = min.id
-join majors maj2 on attendance.major2 = maj2.id
-join majors min2 on attendance.minor2 = min2.id """
+            select attendance.stuID, sex.sex, race.race, age, gradYear, 
+            maj.major, min.major, maj2.major, min2.major, 
+            case when program=0 then "undergrad" else "graduate" end, 
+            case when housing=0 then "off" else "on" end, 
+            case when transfer=0 then "is not" else "is"end, 
+            case when latinx=0 then "is not" else "is" end,
+            case when lgbtq=0 then "is not" else "is" end,
+            access as "Access" from attendance 
+            join sex on attendance.sex=sex.id 
+            join race on attendance.race=race.id
+            join majors maj on attendance.major = maj.id
+            join majors min on attendance.minor = min.id
+            join majors maj2 on attendance.major2 = maj2.id
+            join majors min2 on attendance.minor2 = min2.id """
         s = ""
         if request.form['sex'] != '0':
             s += "attendance.sex = " + request.form['sex']
-        if request.form['race'] != '0':
+        if request.form['race'] != 'any':
             if s > "":
                 s += " and "
-            s += "attendance.race = " + request.form['race']
+            s += "race.race like '%" + request.form['race'] + "%'"
         if request.form['major1'] != '0':
             if s > "":
                 s += " and "
@@ -230,6 +231,10 @@ join majors min2 on attendance.minor2 = min2.id """
             if s > "":
                 s += " and "
             s += "transfer = 1"
+        if request.form.get('lgbtq') is not None:
+            if s > "":
+                s += " and "
+            s += "lgbtq = 1"
 
         if request.form['gradStart'] != "":
             if s > "":
@@ -249,8 +254,7 @@ join majors min2 on attendance.minor2 = min2.id """
         resultsquery += "where attendance.event = " + str(j)
         if s > "":
             resultsquery += " and " + s
-        resultsquery += " group by attendance.stuID"
-        print(resultsquery)
+        resultsquery += " group by attendance.stuID order by attendance.stuID limit 100"
         cursor.execute(resultsquery)
         results = cursor.fetchall()
         return render_template('results.html', eventNum=j, results=results)
@@ -262,15 +266,17 @@ join majors min2 on attendance.minor2 = min2.id """
         sexs[i+1] = s[i][0]
     cursor.execute("select race from race order by id")
     r = cursor.fetchall()
-    races = {0:"any"}
+    races = ["any"]
     for i in range(len(r)):
-        races[i+1] = r[i][0]
+        if "/" in r[i][0]:
+            break
+        races.append(r[i][0])
     cursor.execute("select major from majors order by id")
     m = cursor.fetchall()
     majors = {0:"any"}
     for i in range(len(m)):
         majors[i+1] = m[i][0]
-    housings = {0:"Both",1:"On Campus",2:"Off Campus"}
+    housings = {0:"Both",1:"Off Campus",2:"On Campus"}
     grads = {0:"Both",1:"Undergraduate",2:"Graduate"}
     return render_template('view.html', eventNum=j,
                            sexs=sexs, races=races, majors=majors, housings=housings, grads=grads)
@@ -315,9 +321,9 @@ def delete(i):
         return '<script src="/static/delete.js"></script><script>deleter(' + i + ')</script>'
 
 checkList = []
-
+bools = 5
 def setUpCheckList():
-    global checkList
+    global checkList, bools
     cursor = mysql.connection.cursor()
 
     cursor.execute("select count(*) from sex")              # number of options that the sex could be
@@ -337,14 +343,18 @@ def setUpCheckList():
 
     checkList.append(99)                                    # grad year should not be more than double digits
 
-    for _ in range(4):
-        checkList.append(1)                                 # four booleans (program, housing(on/off), transfer, latinx)
+    for _ in range(bools):
+        checkList.append(1)                                 # five booleans (program, housing(on/off),
+                                                            # transfer, latinx, lgbtq)
 
 def checkString(s):
     global checkList
     try:
         data = s.split('/')
-        if len(data) != len(checkList)+3:
+        if not checkList:                                   # one-time set up of values to test against
+            setUpCheckList()
+
+        if len(data) != len(checkList)+2:                   # plus 2 because of stuID and code
             raise Exception
 
         for instance in data:                               # should all be (able to be) ints
@@ -358,15 +368,16 @@ def checkString(s):
         intData = list(map(int,data))                       # for testing the value in the string
         code = intData.pop()
 
-        if not checkList:                                   # one-time set up of values to test against
-            setUpCheckList()
         for i in range(len(checkList)):                     # check values against constraints
-            if not (0 < intData[i] <= checkList[i]):        # Taking advantage of python if statements
+            if i >= len(checkList) - bools:                 # these are the boolean values so 0 is ok
+                if intData[i] != 0 and intData[i] != 1:
+                    raise Exception
+            elif not (0 < intData[i] <= checkList[i]):      # Taking advantage of python if statements
                 raise Exception
 
         cursor = mysql.connection.cursor()                  # testing 'code' for getting an event
 
-        # (see if 'code' is for real event)
+# (see if 'code' is for real event)
         cursor.execute("select id from events where code = " + str(code) + ' and "'
                        + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                        + '" between startTime and endTime')
@@ -379,14 +390,13 @@ def checkString(s):
 
 def putInDatabase(s):
     cursor = mysql.connection.cursor()
-
     data = s.split('/')                                     # formatting the sql query
     code = data.pop()
     values = ""
     values += '"' + data[0] + '"'
     for i in range(1,len(data)):
         values += ', ' + data[i]
-    # put event foreign key id in place of the code in the string
+# put event foreign key id in place of the code in the string
     cursor.execute("select id from events where code = " + str(code) + ' and "'
                    + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                    + '" between startTime and endTime')
@@ -394,8 +404,8 @@ def putInDatabase(s):
 
     values += ', ' + str(eventID)
     sql = "INSERT INTO attendance (stuID, sex, race, age, major, minor, major2, minor2," \
-          " gradYear, program, housing, transfer, latinx, event, access)" \
-          " VALUES (" + values + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + ");"
+          " gradYear, program, housing, transfer, latinx, lgbtq, event, access)" \
+          " VALUES (" + values + ', "' + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + '");'
 
     cursor.execute(sql)
     mysql.connection.commit()
@@ -411,9 +421,13 @@ def attend():
             return 'failure'
     return 'failure'
 
-@app.route('/test', methods=['GET', 'POST'])
-def test():
-    return render_template("test.html")
+# @app.route('/test', methods=['GET', 'POST'])
+# def test():
+#     return render_template("test.html")
+
+@app.errorhandler(500)
+def err401(err):
+    return render_template('error.html', err=err, login=(not current_user.is_authenticated))
 
 @app.errorhandler(404)
 def err404(err):
