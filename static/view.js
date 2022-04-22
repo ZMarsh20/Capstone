@@ -1,4 +1,4 @@
-var form = document.getElementById("viewForm")
+var form = document.getElementById("viewForm");
 var age1 = document.getElementById("ageStart");
 var age2 = document.getElementById("ageEnd");
 var grad1 = document.getElementById("gradStart");

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Generator</title>
+  <link href="/static/css.css" rel="stylesheet">
+</head>
+<body>
+  <form id="qrForm" action="/qr" onsubmit="return check(event)" method="POST">
+    <label for="stuID">Student ID</label><br>
+    <input type="text" id="stuID" name="stuID"  minlength="6" maxlength="6" required><br>
+
+    <label for="sex">Sex</label><br>
+    <select id="sex" name="sex">
+      {% for key, val in sexs.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select><br>
+
+    <br><label for="race">Select the ethnicity which you most identify with</label><br>
+    <select id="race" name="race">
+      {% for key, val in races.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select><br>
+
+    <br><label for="major1">Major |</label>
+    <label for="minor1">Minor |</label>
+    <label for="major2">2nd Major |</label>
+    <label for="minor2">2nd Minor</label><br>
+    <select id="major1" name="major1">
+      {% for key, val in majors.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select>
+    <select id="minor1" name="minor1">
+      {% for key, val in majors.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select>
+    <select id="major2" name="major2">
+      {% for key, val in majors.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select>
+    <select id="minor2" name="minor2">
+      {% for key, val in majors.items()|sort() %}
+      <option value="{{key}}">{{val|title}}</option>
+      {%endfor%}
+    </select><br>
+
+    <br><label for="age">Your Age :</label>
+    <input id="age" name="age" type="number" min="0" max="99" required>
+    <br><label for="gradYear">Grad Year:</label>
+    <input id="gradYear" name="gradYear" type="number" min="0" max="99" required><br>
+
+    <p>Mark each box if you align with the below groups</p>
+    <label for="program">Graduate</label>
+    <input type="checkbox" id="program" name="latinx">
+    <br><label for="transfer">Transfer Student</label>
+    <input type="checkbox" id="transfer" name="transfer">
+    <br><label for="housing">Live on Campus</label>
+    <input type="checkbox" id="housing" name="housing">
+    <br><label for="latinx">Latinx</label>
+    <input type="checkbox" id="latinx" name="latinx">
+    <br><label for="lgbtq">LGBTQ+</label>
+    <input type="checkbox" id="lgbtq" name="lgbtq">
+
+    <br><br><input type="submit">
+  </form>
+  <script src="/static/qr.js"></script>
+</body>
+</html>

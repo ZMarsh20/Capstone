@@ -13,7 +13,7 @@
     </select>
 
     <select id="race" name="race">
-        {% for val in races %}
+        {% for key, val in races.items() %}
         <option value="{{val}}">{{val|title}}</option>
         {%endfor%}
     </select><br>
