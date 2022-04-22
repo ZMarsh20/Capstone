@@ -4,6 +4,8 @@
 {% block content %}
 <form id="viewForm" action="/view/{{eventNum}}" onsubmit="return check(event)" method="POST">
 
+    <h1>{{event}}</h1>
+
     <label for="sex">Sex | </label>
     <label for="race">Ethnicity</label><br>
     <select id="sex" name="sex">
