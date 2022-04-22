@@ -1,10 +1,9 @@
-import flask_mysqldb
 import random
 import time
-import pyqrcode
 from datetime import datetime
 from flask_mail import Mail, Message
 from passlib.hash import sha256_crypt
+import flask_mysqldb
 from flask import Flask, render_template, request, url_for, redirect, abort, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
