@@ -369,6 +369,9 @@ def checkString(s):
         stuID = data.pop(0)                                 # check format of studentID
         if len(stuID) != 6 or int(stuID) < 0:
             raise Exception
+        for i in stuID:
+            if not i.isnumeric():                           # handling 1e200 or 0x123 and other cases
+                raise Exception
 
         intData = list(map(int,data))                       # for testing the value in the string
         code = intData.pop()
