@@ -1,14 +1,14 @@
-import flask_mysqldb
-import random
 import time
-import pyqrcode
+import MySQLdb
+from random import randint
 from datetime import datetime
 from flask_mail import Mail, Message
 from passlib.hash import sha256_crypt
-from flask import Flask, render_template, request, url_for, redirect, abort, session
 from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, url_for, redirect, abort, session
 from flask_login import UserMixin, LoginManager, login_user, logout_user, current_user, login_required
 from flask_qrcode import QRcode
+import flask_mysqldb
 #import os
 #from dotenv import load_dotenv
 #project_folder = os.path.expanduser('~/mysite')
@@ -34,13 +34,14 @@ app.config['MAIL_USE_SSL'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/cs_495'
 #'mysql://victorf8:'+ os.getenv("PASSWORD") +'@victorf8.mysql.pythonanywhere-services.com/victorf8$cs_495'
 app.config['SECRET_KEY'] = "halsdgkbrhjdfhaj320hdf"#os.getenv("SECRET_KEY")
+app.config['SQLALCHEMY_POOL_RECYCLE'] = 280
 
 mysql = flask_mysqldb.MySQL(app)
 db = SQLAlchemy(app)
 mail = Mail(app)
 QRcode(app)
 
-#os.environ["TZ"] = "America/Denver"
+#os.environ["TZ"] = "America/Denver"                # make it not UTC
 #time.tzset()
 
 login_manager = LoginManager(app)
@@ -61,6 +62,14 @@ class Events(db.Model):
     code = db.Column(db.Integer, nullable=False)
     user = db.Column(db.Integer, db.ForeignKey('users.id'))
 
+def safeCursor():
+    try:
+        cursor = mysql.connection.cursor()
+    except (AttributeError, MySQLdb.OperationalError):      # if connection was closed, open it so no error
+        mysql.connect()
+        cursor = mysql.connection.cursor()
+    return cursor
+
 sexQuery = ()
 raceQuery = ()
 majorQuery = ()
@@ -70,13 +79,14 @@ bools = 5
 def setQueries():
     global sexQuery,raceQuery,majorQuery
     global checkList, bools
-    cursor = mysql.connection.cursor()
+    cursor = safeCursor()
     cursor.execute("select sex from sex order by id")       # set up three common queries to just do once
     sexQuery = cursor.fetchall()
     cursor.execute("select race from race order by id")     # sex race and major are used a couple times lower
     raceQuery = cursor.fetchall()
     cursor.execute("select major from majors order by id")  # these are fine as globals since they shouldn't change
     majorQuery = cursor.fetchall()
+
 
     checkList.append(len(sexQuery))                         # number of options that the sex could be
 
@@ -180,7 +190,7 @@ def sign_up():
                      name=name)
         if Users.query.filter_by(username=user.username).first() is None:               # already a user?
             if "@" in user.username and "western.edu" in user.username.split('@')[-1]:  # western emails only.
-                session['code'] = random.randint(100000000,999999999)                   # the verification code.
+                session['code'] = randint(100000000,999999999)                   # the verification code.
                 session['timer'] = time.time()                                          # ten min timer.
                 msg = Message('Email Confirmation Code', recipients=[user.username])    # email message boiler plate
                 msg.body = 'Here is your confirmation code: ' + str(session['code'])
@@ -210,6 +220,7 @@ def permission(i):
     eventUser = Events.query.filter_by(id=i).first()            # verify that event id belongs to user
     if eventUser is None or eventUser.user != current_user.id:
         abort(401)
+    return eventUser
 
 def fillView(y):
     x = {0:"any"}
@@ -223,8 +234,8 @@ def fillView(y):
 @login_required
 def view(i):
     global sexQuery,raceQuery,majorQuery
-    cursor = mysql.connection.cursor()
-    permission(i)
+    cursor = safeCursor()
+    event = permission(i).event
     if request.method == "POST":        # a lovely query for all filtered data
         resultsQuery = """
             select attendance.stuID, sex.sex, race.race, age, gradYear, 
@@ -305,7 +316,7 @@ def view(i):
     majors = fillView(majorQuery)                       # all selections for form
     housings = {0:"Both",1:"Off Campus",2:"On Campus"}
     grads = {0:"Both",1:"Undergraduate",2:"Graduate"}
-    return render_template('view.html', eventNum=i,
+    return render_template('view.html', eventNum=i, event=event,
                            sexs=sexs, races=races, majors=majors, housings=housings, grads=grads)
 
 @app.route('/add', methods=['GET','POST'])
@@ -317,8 +328,7 @@ def add():
 @app.route('/update/<i>', methods=['GET','POST'])
 @login_required
 def update(i):
-    permission(i)
-    event = Events.query.filter_by(id=i).first()
+    event = permission(i)
     if str(event.startTime) <= datetime.now().strftime("%Y-%m-%d %H:%M:%S"):  # can't update if ongoing (or past)
         abort(401)
     session['update'] = True
@@ -346,7 +356,7 @@ def delete(i):
 
 def checkString(s):
     global checkList
-    cursor = mysql.connection.cursor()
+    cursor = safeCursor()
     try:
         data = s.split('/')
         if len(data) != len(checkList)+2:                   # plus 2 because of stuID and code
@@ -382,7 +392,7 @@ def checkString(s):
         return False
 
 def putInDatabase(s):
-    cursor = mysql.connection.cursor()
+    cursor = safeCursor()
     data = s.split('/')                                     # formatting the sql query
     code = data.pop()
     values = '"' + data[0] + '"'
@@ -462,9 +472,9 @@ def qr():
     majors = fillQR(majorQuery)
     return render_template("qr.html", sexs=sexs, races=races, majors=majors)
 
-@app.route('/test', methods=['GET', 'POST'])
-def test():
-    return render_template("test.html")
+# @app.route('/test', methods=['GET', 'POST'])
+# def test():
+#     return render_template("test.html")
 
 @app.errorhandler(500)
 def err401(err):
