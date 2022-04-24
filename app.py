@@ -253,60 +253,45 @@ def view(i):
             join majors maj2 on attendance.major2 = maj2.id
             join majors min2 on attendance.minor2 = min2.id """
         s = ""
-        def ands(s):
-            if s > "":          # see if and is needed (filter or no other filter in front of new one)
-                s += " and "
-            return s
-
         if request.form['sex'] != '0':
-            s += "attendance.sex = " + request.form['sex']
+            s += " and attendance.sex = " + request.form['sex']
         if request.form['race'] != 'any':
-            s = ands(s)
-            s += "race.race like '%" + request.form['race'] + "%'"      # %% so 'asian' also selects part asian peoples
+            s += " and race.race like '%" + request.form['race'] + "%'"     # %% so 'asian' also selects part asian peoples
         if request.form['major1'] != '0':
-            s = ands(s)
-            s += "attendance.major = " + request.form['major1']
+            s += " and attendance.major = " + request.form['major1']
         if request.form['minor1'] != '0':
-            s = ands(s)
-            s += "minor = " + request.form['minor1']                    # messy and gross but I think the only way to
-        if request.form['major2'] != '0':                               # really do these. similar pattern but different
-            s = ands(s)                                                 # data for the query
-            s += "major2 = " + request.form['major2']
+            s += " and minor = " + request.form['minor1']                   # messy and gross but I think the only way to
+        if request.form['major2'] != '0':                                   # really do these. similar pattern but different
+            s += " and major2 = " + request.form['major2']                  # data for the query
         if request.form['minor2'] != '0':
-            s = ands(s)
-            s += "minor2 = " + request.form['minor2']
+            s += " and minor2 = " + request.form['minor2']
         if request.form['grad'] != '0':
-            s = ands(s)
-            s += "program = " + str(int(request.form['grad']) - 1)      # these two are boolean values but with option
-        if request.form['housing'] != '0':                              # to see either as well as both
-            s = ands(s)
-            s += "housing = " + str(int(request.form['housing']) - 1)
-        if request.form.get('latinx') is not None:                      # these three are booleans where only check
-            s = ands(s)                                                      # "both" or "true". no need for only "not true"
-            s += "latinx = 1"
+            s += " and program = " + str(int(request.form['grad']) - 1)     # these two are boolean values but with option
+        if request.form['housing'] != '0':                                  # to see either as well as both
+            s += " and housing = " + str(int(request.form['housing']) - 1)
+        if request.form.get('latinx') is not None:                          # these three are booleans where only check
+            s += " and latinx = 1"                                          # "both" or "true". no need for only "not true"
         if request.form.get('transfer') is not None:
-            s = ands(s)
-            s += "transfer = 1"
+            s += " and transfer = 1"
         if request.form.get('lgbtq') is not None:
-            s = ands(s)
-            s += "lgbtq = 1"
+            s += " and lgbtq = 1"
         if request.form['gradStart'] != "":
-            s = ands(s)
-            if request.form['gradStart'] == request.form['gradEnd']:    # if they're equal no need for between
-                s += "gradYear = " + request.form['gradStart']
+            if request.form['gradStart'] == request.form['gradEnd']:        # if they're equal no need for between
+                s += " and gradYear = " + request.form['gradStart']
             else:
-                s += "gradYear between " + request.form['gradStart'] + " and " + request.form['gradEnd']
+                s += " and gradYear between " + request.form['gradStart'] + " and " + request.form['gradEnd']
         if request.form['ageStart'] != "":
             s = ands(s)
             if request.form['ageStart'] == request.form['ageEnd']:
-                s += "age = " + request.form['ageStart']
+                s += " and age = " + request.form['ageStart']
             else:
-                s += "age between " + request.form['ageStart'] + " and " + request.form['ageEnd']
+                s += " and age between " + request.form['ageStart'] + " and " + request.form['ageEnd']
 
         resultsQuery += "where attendance.event = " + str(i)
-        if s > "":
-            resultsQuery += " and " + s  # no other filters then no need for and
-        resultsQuery += " group by attendance.stuID order by attendance.stuID limit 100"  # group by -> no duplicates
+        resultsQuery += s                           # if no filters s = "" otherwise it will include the and
+        resultsQuery += """ group by attendance.stuID
+                        order by attendance.access desc limit 100"""
+                                                    # group by -> no duplicates
         cursor.execute(resultsQuery)                # order by -> I think it does regardless but why not add it
         results = cursor.fetchall()                 # limit 100 -> very necessary for efficient querying
         return render_template('results.html', eventNum=i, results=results)
