@@ -16,6 +16,11 @@ function codeTaken() {
     alert("Event code taken for this time");
     code.style.backgroundColor = "red";
 }
+function codeTaken() {
+    alert("You can only have at most 5 events at any given time");
+    start.style.backgroundColor = "red";
+    end.style.backgroundColor = "red";
+}
 
 function check() {
     var diff = moment(start.value).diff(end.value, 'days');
