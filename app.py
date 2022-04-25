@@ -108,21 +108,22 @@ def timeformat(s):
 def checkMaxEvents(event):
     max = 4
     cursor = safeCursor()
-    sql = "select count(*) from events where user = " + current_user.id
-    + " and (startTime between " + event.startTime + " and " + event.endTime
-    + " or endTime between " + event.startTime + " and " + event.endTime
-    + " or " + event.startTime + " between startTime and endTime)"    # Last bit for being contained entirely within other event.
-    if session['update']:                                           # Could add this regardless since without updating
-        sql += " and event != " + event.event                       # the name wouldn't be present therefore wouldn't affect
-    cursor.execute(sql)                                             # outcome but easier to read.
-    if cursor.first() > max:
+    sql = "select count(*) from events where user = " + str(current_user.id) \
+    + ' and (startTime between "' + str(event.startTime) + '" and "' + str(event.endTime) \
+    + '" or endTime between "' + str(event.startTime) + '" and "' + str(event.endTime) \
+    + '" or "' + str(event.startTime) + '" between startTime and endTime)'
+                                                            # Last bit for being contained entirely within other event.
+    if session['update']:                                   # Could add this regardless since without updating
+        sql += ' and event != "' + event.event + '"'        # the name wouldn't be present therefore wouldn't affect
+    cursor.execute(sql)                                     # outcome but easier to read.
+    if cursor.fetchone()[0] > max:
         return True
     return False
 
 def codeTaken(event):
     codes = Events.query.filter_by(code=event.code)         # Checking time overlaps.
     for code in codes:
-        if code.event == event.event and code.code == event.code:  # Only possible in updating. Same code is allowed
+        if str(code.event) == str(event.event) and int(code.code) == int(event.code):  # Only possible in updating. Same code is allowed
             continue                                    # if update now overlaps it will still be caught by the next code.
         if str(code.startTime) <= event.startTime <= str(code.endTime) \
                 or str(code.startTime) <= event.endTime <= str(code.endTime) \
@@ -141,7 +142,7 @@ def home():
                             endTime=timeformat(request.form['end']),
                             code=request.form['code'], user=current_user.id)
             if checkMaxEvents(event):
-                session['addwrong3']                                        # addwrong3 is too many events.
+                session['addwrong3'] = True                                 # addwrong3 is too many events.
                 return '<script>document.location.href = document.referrer</script>'
             if (Events.query.filter_by(event=event.event).first() is None
                 and "REMOVED" not in event.event) or session['update']:     # Ff "REMOVED" is in their event, it could cause
@@ -329,8 +330,11 @@ def view(i):
 @login_required
 def add():
     session['update'] = False
-    return render_template('add.html', addwrong=session['addwrong'],
-                           addwrong2=session['addwrong2'], addwrong3=session['addwrong3'])
+    addwrong = session['addwrong']
+    addwrong2 = session['addwrong2']
+    addwrong3 = session['addwrong3']
+    session['addwrong'] = session['addwrong2'] = session['addwrong3'] = False
+    return render_template('add.html', addwrong=addwrong, addwrong2=addwrong2, addwrong3=addwrong3)
 
 @app.route('/update/<i>', methods=['GET','POST'])
 @login_required
@@ -339,8 +343,10 @@ def update(i):
     if str(event.startTime) <= datetime.now().strftime("%Y-%m-%d %H:%M:%S"):  # Can't update if ongoing (or past).
         abort(401)
     session['update'] = True
-    return render_template('add.html', event=event, update=True,
-                           addwrong2=session['addwrong2'], addwrong3=session['addwrong3'])
+    addwrong2 = session['addwrong2']
+    addwrong3 = session['addwrong3']
+    session['addwrong2'] = session['addwrong3'] = False
+    return render_template('add.html', event=event, update=True, addwrong2=addwrong2, addwrong3=addwrong3)
 
 @app.route('/delete/<i>', methods=['GET','POST'])
 @login_required

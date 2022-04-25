@@ -9,7 +9,7 @@
         <h1>Get a new event set up!</h1>
     {%endif%}
     <form action="/" onsubmit="return check()" method="post">
-        {% if %}
+        {% if update %}
             <input hidden value="{{event.event}}" id="eName" name="eName">
         {%else%}
             <label id="leName" for="eName">Event Name: </label><br>

@@ -16,7 +16,7 @@ function codeTaken() {
     alert("Event code taken for this time");
     code.style.backgroundColor = "red";
 }
-function codeTaken() {
+function maxEvents() {
     alert("You can only have at most 5 events at any given time");
     start.style.backgroundColor = "red";
     end.style.backgroundColor = "red";
