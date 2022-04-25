@@ -18,7 +18,8 @@ function codeTaken() {
 }
 
 function check() {
-    if(end.value <= start.value || (start.value + ":00") < date){
+    var diff = moment(start.value).diff(end.value, 'days');
+    if(end.value <= start.value || (start.value + ":00") < date || diff > 8){
         alert("Dates do not make sense.\nMake sure they aren't in the past and the end is after the start.");
         start.style.backgroundColor = "red";
         end.style.backgroundColor = "red";
