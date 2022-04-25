@@ -23,15 +23,14 @@ function maxEvents() {
     end.style.backgroundColor = "red";
 }
 
-function check(e) {
-   e.preventDefault();
+function check() {
     var diffTime = Math.abs(new Date(end.value) - new Date(start.value));
     var diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if(end.value <= start.value || (start.value + ":00") < date || diffDays > 8){
         alert("Dates do not make sense.\nMake sure they aren't in the past and the end is after the start.");
         start.style.backgroundColor = "red";
         end.style.backgroundColor = "red";
-    } else {
-        form.submit();
-    }
+        return false;
+    } 
+    return true;
 }
