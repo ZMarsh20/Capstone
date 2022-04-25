@@ -2,10 +2,19 @@
 {% block title %}Add Event{%endblock%}
 
 {% block content %}
-    <h1>Get a new event set up!</h1>
+    {% if update %}
+        <h1>Change the event for:</h1>
+        <h3 style="color: red;">{{event.event}}</h3>
+    {%else%}
+        <h1>Get a new event set up!</h1>
+    {%endif%}
     <form action="/" onsubmit="return check()" method="post">
-        <label id="leName" for="eName">Event Name: </label><br>
-        <input id="eName" name="eName" type="text" maxlength="50" required><br>
+        {% if %}
+            <input hidden value="{{event.event}}" id="eName" name="eName">
+        {%else%}
+            <label id="leName" for="eName">Event Name: </label><br>
+            <input id="eName" name="eName" type="text" maxlength="50" required><br>
+        {%endif%}
         <label id="lstart" for="start">Start time: </label><br>
         <input id="start" name="start" type="datetime-local"><br>
         <label id="lend" for="start">End time: </label><br>

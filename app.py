@@ -108,10 +108,10 @@ def timeformat(s):
 def checkMaxEvents(event):
     max = 4
     cursor = safeCursor()
-    sql = "select count(*) from events where user = " + current_user.id +
-    " and (startTime between " + event.startTime + " and " + event.endTime +
-    " or endTime between " + event.startTime + " and " + event.endTime +
-    " or " + event.startTime + " between startTime and endTime)"    # Last bit for being contained entirely within other event.
+    sql = "select count(*) from events where user = " + current_user.id
+    + " and (startTime between " + event.startTime + " and " + event.endTime
+    + " or endTime between " + event.startTime + " and " + event.endTime
+    + " or " + event.startTime + " between startTime and endTime)"    # Last bit for being contained entirely within other event.
     if session['update']:                                           # Could add this regardless since without updating
         sql += " and event != " + event.event                       # the name wouldn't be present therefore wouldn't affect
     cursor.execute(sql)                                             # outcome but easier to read.
@@ -125,7 +125,7 @@ def codeTaken(event):
         if code.event == event.event and code.code == event.code:  # Only possible in updating. Same code is allowed
             continue                                    # if update now overlaps it will still be caught by the next code.
         if str(code.startTime) <= event.startTime <= str(code.endTime) \
-                or str(code.startTime) <= event.endTime <= str(code.endTime)
+                or str(code.startTime) <= event.endTime <= str(code.endTime) \
                 or event.startTime < str(code.startTime) < event.endTime:
             return False
     return True
@@ -142,7 +142,7 @@ def home():
                             code=request.form['code'], user=current_user.id)
             if checkMaxEvents(event):
                 session['addwrong3']                                        # addwrong3 is too many events.
-                return '<script>document.location.href = document.referrer</script>
+                return '<script>document.location.href = document.referrer</script>'
             if (Events.query.filter_by(event=event.event).first() is None
                 and "REMOVED" not in event.event) or session['update']:     # Ff "REMOVED" is in their event, it could cause
                 if codeTaken(event):                                        # problems with overlap in deleting.
@@ -329,7 +329,8 @@ def view(i):
 @login_required
 def add():
     session['update'] = False
-    return render_template('add.html', addwrong=session['addwrong'], addwrong2=session['addwrong2'] addwrong3=session['addwrong3'])
+    return render_template('add.html', addwrong=session['addwrong'],
+                           addwrong2=session['addwrong2'], addwrong3=session['addwrong3'])
 
 @app.route('/update/<i>', methods=['GET','POST'])
 @login_required
@@ -338,7 +339,8 @@ def update(i):
     if str(event.startTime) <= datetime.now().strftime("%Y-%m-%d %H:%M:%S"):  # Can't update if ongoing (or past).
         abort(401)
     session['update'] = True
-    return render_template('update.html', event=event, addwrong2=session['addwrong2'])
+    return render_template('add.html', event=event, update=True,
+                           addwrong2=session['addwrong2'], addwrong3=session['addwrong3'])
 
 @app.route('/delete/<i>', methods=['GET','POST'])
 @login_required
