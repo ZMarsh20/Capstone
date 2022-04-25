@@ -8,7 +8,7 @@
     {%else%}
         <h1>Get a new event set up!</h1>
     {%endif%}
-    <form id="addForm" action="/" onsubmit="return check(event)" method="post">
+    <form id="addForm" action="/" onsubmit="return check()" method="post">
         {% if update %}
             <input hidden value="{{event.event}}" id="eName" name="eName">
         {%else%}
