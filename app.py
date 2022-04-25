@@ -108,6 +108,8 @@ def timeformat(s):
 def codeTaken(event):
     codes = Events.query.filter_by(code=event.code)         # checking time overlaps
     for code in codes:
+        if code.event == event.event and code.code == event.code:  # only possible in updating. same code is allowed
+            continue                                    # if update now overlaps it will still be caught by the next code
         if str(code.startTime) <= event.startTime <= str(code.endTime) \
                 or str(code.startTime) <= event.endTime <= str(code.endTime):
             return False
