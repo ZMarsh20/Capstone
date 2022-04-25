@@ -1,3 +1,4 @@
+var form = document.getElementById("addForm");
 var eName = document.getElementById("eName");
 var start = document.getElementById("start");
 var end = document.getElementById("end");
@@ -22,14 +23,14 @@ function maxEvents() {
     end.style.backgroundColor = "red";
 }
 
-function check() {
+function check(e) {
+   e.preventDefault();
     var diff = moment(start.value).diff(end.value, 'days');
     if(end.value <= start.value || (start.value + ":00") < date || diff > 8){
         alert("Dates do not make sense.\nMake sure they aren't in the past and the end is after the start.");
         start.style.backgroundColor = "red";
         end.style.backgroundColor = "red";
-        return false;
     } else {
-        return true;
+        form.submit();
     }
 }
