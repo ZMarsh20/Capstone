@@ -303,7 +303,6 @@ def view(i):
             else:
                 s += " and gradYear between " + request.form['gradStart'] + " and " + request.form['gradEnd']
         if request.form['ageStart'] != "":
-            s = ands(s)
             if request.form['ageStart'] == request.form['ageEnd']:
                 s += " and age = " + request.form['ageStart']
             else:
@@ -453,9 +452,9 @@ def replaceFillQR(s,l,term):
     if s == '0':
         spot = 0
         for i in l:
+            spot += 1
             if term in i:          # Queries are set up weird -> (('male',),('female',),('other',)).
                 break
-            spot += 1
         return str(spot)           # Simple swap with original value of generic option.
     return s
 
