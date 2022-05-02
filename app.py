@@ -496,7 +496,7 @@ def qr():
 #     return render_template("test.html")
 
 @app.errorhandler(500)
-def err401(err):
+def err500(err):
     return render_template('error.html', err=err, login=(not current_user.is_authenticated))
 
 @app.errorhandler(404)
