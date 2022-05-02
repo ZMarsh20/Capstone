@@ -431,7 +431,10 @@ def putInDatabase(s):
 @app.route('/submit-attendance', methods=['GET', 'POST'])
 def attend():
     if request.method == 'POST':
-        s = request.form['s']
+        try:                                            # Crashing here affects nohing but try catch added anyway
+            s = request.form['s']
+        except Exception:
+            return 'failure' 
         if checkString(s):
             putInDatabase(s)
             return 'success'
