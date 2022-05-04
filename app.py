@@ -145,7 +145,7 @@ def home():
                 session['addwrong3'] = True                                 # addwrong3 is too many events.
                 return '<script>document.location.href = document.referrer</script>'
             if (Events.query.filter_by(event=event.event).first() is None
-                and "REMOVED" not in event.event) or session['update']:     # Ff "REMOVED" is in their event, it could cause
+                and "REMOVED" not in event.event) or session['update']:     # If "REMOVED" is in their event, it could cause
                 if codeTaken(event):                                        # problems with overlap in deleting.
                     if session['update']:
                         temp = Events.query.filter_by(event=event.event).first()
